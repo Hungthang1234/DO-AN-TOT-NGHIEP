@@ -1,1 +1,15 @@
-pandas\nnumpy\nscikit-learn\nmatplotlib\nseaborn\nflask
+pandas
+numpy
+scikit-learn
+tensorflow
+xgboost
+lightgbm
+matplotlib
+seaborn
+plotly
+anthropic
+jupyter
+jupyter-lab
+ipython
+python-dotenv
+flask
