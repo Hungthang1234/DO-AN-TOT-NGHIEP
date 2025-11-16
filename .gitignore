@@ -1,0 +1,76 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# Models (too large for git)
+models/*.joblib
+!models/.gitkeep
+
+# Data files (too large)
+Data/*.csv
+!Data/sample*.csv
+
+# Logs
+logs/*.csv
+logs/*.log
+*.log
+
+# Test outputs
+test_output/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+
+# Flask
+instance/
+.webassets-cache
+
+# Environment variables
+.env
+.flaskenv
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+~$*

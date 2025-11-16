@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dự đoán Giá Nhà - House Price Prediction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .model-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .model-info-item {
+            text-align: center;
+        }
+
+        .model-info-item label {
+            display: block;
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .model-info-item span {
+            display: block;
+            color: #333;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .status-badge.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 968px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 2px solid #28a745;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 2px solid #dc3545;
+        }
+
+        .result h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .result .price {
+            font-size: 2em;
+            font-weight: bold;
+            color: #28a745;
+        }
+
+        .file-upload {
+            border: 2px dashed #667eea;
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .file-upload:hover {
+            background: #f8f9fa;
+        }
+
+        .file-upload input {
+            display: none;
+        }
+
+        .predictions-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        .predictions-table th,
+        .predictions-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .predictions-table th {
+            background: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        .predictions-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card label {
+            display: block;
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        .stat-card span {
+            display: block;
+            color: #333;
+            font-weight: bold;
+            font-size: 1.5em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🏠 Dự đoán Giá Nhà</h1>
+            <p>House Price Prediction using Machine Learning</p>
+            
+            {% if model_loaded %}
+                <span class="status-badge success">✓ Model đã sẵn sàng</span>
+            {% else %}
+                <span class="status-badge error">✗ Model chưa được tải</span>
+            {% endif %}
+
+            {% if model_info %}
+            <div class="model-info">
+                <div class="model-info-item">
+                    <label>Model</label>
+                    <span>{{ model_info.name }}</span>
+                </div>
+                <div class="model-info-item">
+                    <label>RMSE</label>
+                    <span>{{ model_info.rmse }}</span>
+                </div>
+                <div class="model-info-item">
+                    <label>R² Score</label>
+                    <span>{{ model_info.r2 }}</span>
+                </div>
+                <div class="model-info-item">
+                    <label>Features</label>
+                    <span>{{ feature_names|length }}</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <!-- Single Prediction -->
+            <div class="card">
+                <h2>📊 Dự đoán đơn lẻ</h2>
+                <form id="predictionForm">
+                    {% if feature_names %}
+                        {% for feature in feature_names %}
+                        <div class="form-group">
+                            <label for="{{ feature }}">{{ feature|title|replace('_', ' ') }}</label>
+                            <input type="text" 
+                                   id="{{ feature }}" 
+                                   name="{{ feature }}" 
+                                   placeholder="Nhập {{ feature }}"
+                                   required>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p style="color: #dc3545;">⚠ Model chưa được tải. Vui lòng chạy train_pipeline.py trước.</p>
+                    {% endif %}
+                    
+                    <button type="submit" {% if not model_loaded %}disabled{% endif %}>
+                        Dự đoán Giá
+                    </button>
+                </form>
+
+                <div class="loading" id="singleLoading">
+                    <div class="spinner"></div>
+                    <p>Đang xử lý...</p>
+                </div>
+
+                <div class="result" id="singleResult"></div>
+            </div>
+
+            <!-- Batch Prediction -->
+            <div class="card">
+                <h2>📁 Dự đoán hàng loạt</h2>
+                <p style="margin-bottom: 20px; color: #666;">
+                    Tải lên file CSV chứa dữ liệu cần dự đoán
+                </p>
+
+                <form id="batchForm">
+                    <div class="file-upload" onclick="document.getElementById('fileInput').click()">
+                        <input type="file" 
+                               id="fileInput" 
+                               name="file" 
+                               accept=".csv"
+                               {% if not model_loaded %}disabled{% endif %}>
+                        <div>
+                            <p style="font-size: 3em; margin-bottom: 10px;">📤</p>
+                            <p style="font-weight: bold; margin-bottom: 5px;">Click để chọn file CSV</p>
+                            <p style="color: #666; font-size: 0.9em;">hoặc kéo thả file vào đây</p>
+                        </div>
+                    </div>
+
+                    <div id="fileName" style="margin: 15px 0; color: #333; font-weight: bold; text-align: center;"></div>
+
+                    <button type="submit" 
+                            id="batchSubmit" 
+                            style="margin-top: 15px;"
+                            {% if not model_loaded %}disabled{% endif %}>
+                        Dự đoán từ File
+                    </button>
+                </form>
+
+                <div class="loading" id="batchLoading">
+                    <div class="spinner"></div>
+                    <p>Đang xử lý file...</p>
+                </div>
+
+                <div class="result" id="batchResult"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Single Prediction Form
+        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const loading = document.getElementById('singleLoading');
+            const result = document.getElementById('singleResult');
+            
+            loading.classList.add('active');
+            result.style.display = 'none';
+            
+            try {
+                const formData = new FormData(e.target);
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.className = 'result success';
+                    result.innerHTML = `
+                        <h3>✓ Kết quả dự đoán</h3>
+                        <div class="price">${data.formatted_prediction} VND</div>
+                        <p style="margin-top: 10px; color: #666;">
+                            Giá dự đoán: ${data.formatted_prediction}
+                        </p>
+                    `;
+                } else {
+                    result.className = 'result error';
+                    result.innerHTML = `
+                        <h3>✗ Lỗi</h3>
+                        <p>${data.error}</p>
+                    `;
+                }
+                
+                result.style.display = 'block';
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `
+                    <h3>✗ Lỗi</h3>
+                    <p>Không thể kết nối đến server: ${error.message}</p>
+                `;
+                result.style.display = 'block';
+            } finally {
+                loading.classList.remove('active');
+            }
+        });
+
+        // File upload handling
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                fileName.textContent = `📄 ${e.target.files[0].name}`;
+            }
+        });
+
+        // Batch Prediction Form
+        document.getElementById('batchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const loading = document.getElementById('batchLoading');
+            const result = document.getElementById('batchResult');
+            
+            if (!fileInput.files[0]) {
+                alert('Vui lòng chọn file CSV');
+                return;
+            }
+            
+            loading.classList.add('active');
+            result.style.display = 'none';
+            
+            try {
+                const formData = new FormData();
+                formData.append('file', fileInput.files[0]);
+                
+                const response = await fetch('/predict_batch', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    let tableHTML = `
+                        <h3>✓ Dự đoán thành công</h3>
+                        <p>Tổng số dòng: ${data.count}</p>
+                        
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <label>Trung bình</label>
+                                <span>${data.statistics.mean.toLocaleString('vi-VN', {maximumFractionDigits: 0})}</span>
+                            </div>
+                            <div class="stat-card">
+                                <label>Nhỏ nhất</label>
+                                <span>${data.statistics.min.toLocaleString('vi-VN', {maximumFractionDigits: 0})}</span>
+                            </div>
+                            <div class="stat-card">
+                                <label>Lớn nhất</label>
+                                <span>${data.statistics.max.toLocaleString('vi-VN', {maximumFractionDigits: 0})}</span>
+                            </div>
+                            <div class="stat-card">
+                                <label>Độ lệch chuẩn</label>
+                                <span>${data.statistics.std.toLocaleString('vi-VN', {maximumFractionDigits: 0})}</span>
+                            </div>
+                        </div>
+                        
+                        <table class="predictions-table">
+                            <thead>
+                                <tr>
+                                    <th>STT</th>
+                                    <th>Giá dự đoán (VND)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                    `;
+                    
+                    data.predictions.forEach(pred => {
+                        tableHTML += `
+                            <tr>
+                                <td>${pred.row}</td>
+                                <td>${pred.formatted}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    tableHTML += '</tbody></table>';
+                    
+                    if (data.count > 100) {
+                        tableHTML += `<p style="margin-top: 10px; color: #666; font-style: italic;">
+                            * Chỉ hiển thị 100 dòng đầu tiên
+                        </p>`;
+                    }
+                    
+                    result.className = 'result success';
+                    result.innerHTML = tableHTML;
+                } else {
+                    result.className = 'result error';
+                    result.innerHTML = `
+                        <h3>✗ Lỗi</h3>
+                        <p>${data.error}</p>
+                    `;
+                }
+                
+                result.style.display = 'block';
+            } catch (error) {
+                result.className = 'result error';
+                result.innerHTML = `
+                    <h3>✗ Lỗi</h3>
+                    <p>Không thể kết nối đến server: ${error.message}</p>
+                `;
+                result.style.display = 'block';
+            } finally {
+                loading.classList.remove('active');
+            }
+        });
+
+        // Drag and drop for file upload
+        const fileUpload = document.querySelector('.file-upload');
+        
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            fileUpload.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileUpload.addEventListener(eventName, () => {
+                fileUpload.style.background = '#f8f9fa';
+            });
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileUpload.addEventListener(eventName, () => {
+                fileUpload.style.background = 'white';
+            });
+        });
+        
+        fileUpload.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                fileName.textContent = `📄 ${files[0].name}`;
+            }
+        });
+    </script>
+</body>
+</html>
