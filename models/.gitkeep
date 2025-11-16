@@ -1,0 +1,3 @@
+# Placeholder file to keep models directory in git
+# Trained model files (*.joblib) are ignored in .gitignore
+# Download models from releases or train them locally using train_pipeline.py
