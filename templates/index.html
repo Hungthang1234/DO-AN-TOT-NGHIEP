@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dự đoán Giá Nhà - House Price Prediction</title>
+    <title>House Price Prediction & Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * {
             margin: 0;
@@ -15,125 +16,99 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
+            padding: 2rem;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
-        .header {
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .tab-button {
+            padding: 0.75rem 2rem;
             background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .header h1 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 2.5em;
-        }
-
-        .header p {
-            color: #666;
-            font-size: 1.1em;
-        }
-
-        .model-info {
-            background: #f8f9fa;
-            padding: 15px;
+            border: 3px solid white;
+            color: #667eea;
             border-radius: 10px;
-            margin-top: 20px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
-        .model-info-item {
-            text-align: center;
+        .tab-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
         }
 
-        .model-info-item label {
+        .tab-button.active {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
             display: block;
-            color: #666;
-            font-size: 0.9em;
-            margin-bottom: 5px;
-        }
-
-        .model-info-item span {
-            display: block;
-            color: #333;
-            font-weight: bold;
-            font-size: 1.2em;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.9em;
-            font-weight: bold;
-        }
-
-        .status-badge.success {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .status-badge.error {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
-        .content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 30px;
-            margin-bottom: 30px;
-        }
-
-        @media (max-width: 968px) {
-            .content {
-                grid-template-columns: 1fr;
-            }
         }
 
         .card {
             background: white;
-            padding: 30px;
             border-radius: 15px;
+            padding: 2rem;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 2rem;
         }
 
-        .card h2 {
-            color: #333;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 3px solid #667eea;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
         }
 
         .form-group label {
             display: block;
-            color: #555;
+            margin-bottom: 0.5rem;
             font-weight: 600;
-            margin-bottom: 8px;
+            color: #333;
         }
 
         .form-group input,
         .form-group select {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
             border-radius: 8px;
-            font-size: 1em;
+            font-size: 1rem;
             transition: border-color 0.3s;
         }
 
@@ -143,116 +118,97 @@
             border-color: #667eea;
         }
 
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-        }
-
-        button {
-            width: 100%;
-            padding: 15px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        .btn {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
             color: white;
+            padding: 1rem 2rem;
             border: none;
-            border-radius: 8px;
-            font-size: 1.1em;
-            font-weight: bold;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 100%;
         }
 
-        button:hover {
+        .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
         }
 
-        button:active {
-            transform: translateY(0);
-        }
-
-        button:disabled {
-            background: #ccc;
+        .btn:disabled {
+            opacity: 0.6;
             cursor: not-allowed;
             transform: none;
         }
 
-        .result {
-            margin-top: 20px;
-            padding: 20px;
-            border-radius: 8px;
-            display: none;
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
 
-        .result.success {
-            background: #d4edda;
-            border: 2px solid #28a745;
-        }
-
-        .result.error {
-            background: #f8d7da;
-            border: 2px solid #dc3545;
-        }
-
-        .result h3 {
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        .result .price {
-            font-size: 2em;
-            font-weight: bold;
-            color: #28a745;
-        }
-
-        .file-upload {
-            border: 2px dashed #667eea;
-            border-radius: 8px;
-            padding: 30px;
-            text-align: center;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .file-upload:hover {
-            background: #f8f9fa;
-        }
-
-        .file-upload input {
-            display: none;
-        }
-
-        .predictions-table {
-            width: 100%;
-            margin-top: 20px;
-            border-collapse: collapse;
-        }
-
-        .predictions-table th,
-        .predictions-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
-
-        .predictions-table th {
-            background: #667eea;
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            font-weight: bold;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
-        .predictions-table tr:hover {
-            background: #f8f9fa;
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .chart-container h3 {
+            margin-top: 0;
+            color: #6a11cb;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .results {
+            margin-top: 2rem;
+        }
+
+        .result-box {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
         }
 
         .loading {
-            display: none;
             text-align: center;
-            padding: 20px;
-        }
-
-        .loading.active {
-            display: block;
+            padding: 2rem;
         }
 
         .spinner {
@@ -270,336 +226,526 @@
             100% { transform: rotate(360deg); }
         }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-top: 20px;
-        }
-
-        .stat-card {
-            background: #f8f9fa;
-            padding: 15px;
+        .error {
+            background: #ff6b6b;
+            color: white;
+            padding: 1rem;
             border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .model-info {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .file-upload {
+            border: 2px dashed #667eea;
+            border-radius: 12px;
+            padding: 2rem;
             text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
 
-        .stat-card label {
-            display: block;
-            color: #666;
-            font-size: 0.9em;
-            margin-bottom: 5px;
+        .file-upload:hover {
+            background: #f8f9fa;
+            border-color: #6a11cb;
         }
 
-        .stat-card span {
-            display: block;
-            color: #333;
-            font-weight: bold;
-            font-size: 1.5em;
+        .file-upload input {
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Header -->
-        <div class="header">
-            <h1>🏠 Dự đoán Giá Nhà</h1>
-            <p>House Price Prediction using Machine Learning</p>
-            
-            {% if model_loaded %}
-                <span class="status-badge success">✓ Model đã sẵn sàng</span>
-            {% else %}
-                <span class="status-badge error">✗ Model chưa được tải</span>
-            {% endif %}
+        <header>
+            <h1>🏠 House Price Prediction & Analytics</h1>
+            <p class="subtitle">AI-powered real estate price prediction with data insights</p>
+        </header>
 
-            {% if model_info %}
-            <div class="model-info">
-                <div class="model-info-item">
-                    <label>Model</label>
-                    <span>{{ model_info.name }}</span>
-                </div>
-                <div class="model-info-item">
-                    <label>RMSE</label>
-                    <span>{{ model_info.rmse }}</span>
-                </div>
-                <div class="model-info-item">
-                    <label>R² Score</label>
-                    <span>{{ model_info.r2 }}</span>
-                </div>
-                <div class="model-info-item">
-                    <label>Features</label>
-                    <span>{{ feature_names|length }}</span>
-                </div>
-            </div>
-            {% endif %}
+        <div class="tab-buttons">
+            <button class="tab-button active" onclick="switchTab('single')">Single Prediction</button>
+            <button class="tab-button" onclick="switchTab('batch')">Batch Prediction</button>
+            <button class="tab-button" onclick="switchTab('analytics')">Data Analytics</button>
         </div>
 
-        <!-- Main Content -->
-        <div class="content">
-            <!-- Single Prediction -->
+        <!-- Single Prediction Tab -->
+        <div id="single-tab" class="tab-content active">
             <div class="card">
-                <h2>📊 Dự đoán đơn lẻ</h2>
-                <form id="predictionForm">
-                    {% if feature_names %}
-                        {% for feature in feature_names %}
+                <h2>🎯 Single Property Prediction</h2>
+                <div id="modelInfo" class="model-info"></div>
+                
+                <form id="singleForm">
+                    <div class="form-grid">
                         <div class="form-group">
-                            <label for="{{ feature }}">{{ feature|title|replace('_', ' ') }}</label>
-                            <input type="text" 
-                                   id="{{ feature }}" 
-                                   name="{{ feature }}" 
-                                   placeholder="Nhập {{ feature }}"
-                                   required>
+                            <label>Country</label>
+                            <select name="country" required>
+                                <option value="">Select...</option>
+                                <option value="Singapore">Singapore</option>
+                                <option value="Australia">Australia</option>
+                                <option value="USA">USA</option>
+                            </select>
                         </div>
-                        {% endfor %}
-                    {% else %}
-                        <p style="color: #dc3545;">⚠ Model chưa được tải. Vui lòng chạy train_pipeline.py trước.</p>
-                    {% endif %}
-                    
-                    <button type="submit" {% if not model_loaded %}disabled{% endif %}>
-                        Dự đoán Giá
-                    </button>
-                </form>
-
-                <div class="loading" id="singleLoading">
-                    <div class="spinner"></div>
-                    <p>Đang xử lý...</p>
-                </div>
-
-                <div class="result" id="singleResult"></div>
-            </div>
-
-            <!-- Batch Prediction -->
-            <div class="card">
-                <h2>📁 Dự đoán hàng loạt</h2>
-                <p style="margin-bottom: 20px; color: #666;">
-                    Tải lên file CSV chứa dữ liệu cần dự đoán
-                </p>
-
-                <form id="batchForm">
-                    <div class="file-upload" onclick="document.getElementById('fileInput').click()">
-                        <input type="file" 
-                               id="fileInput" 
-                               name="file" 
-                               accept=".csv"
-                               {% if not model_loaded %}disabled{% endif %}>
-                        <div>
-                            <p style="font-size: 3em; margin-bottom: 10px;">📤</p>
-                            <p style="font-weight: bold; margin-bottom: 5px;">Click để chọn file CSV</p>
-                            <p style="color: #666; font-size: 0.9em;">hoặc kéo thả file vào đây</p>
+                        <div class="form-group">
+                            <label>City</label>
+                            <input type="text" name="city" required placeholder="e.g., TAMPINES">
+                        </div>
+                        <div class="form-group">
+                            <label>Date (YYYY-MM-DD)</label>
+                            <input type="text" name="date" required placeholder="2024-01-01">
+                        </div>
+                        <div class="form-group">
+                            <label>Area (m²)</label>
+                            <input type="number" name="area_m2" step="0.01" required placeholder="100">
+                        </div>
+                        <div class="form-group">
+                            <label>Property Type</label>
+                            <input type="text" name="property_type" required placeholder="e.g., 4 ROOM">
+                        </div>
+                        <div class="form-group">
+                            <label>Price per m²</label>
+                            <input type="number" name="price_per_m2" step="0.01" required placeholder="5000">
+                        </div>
+                        <div class="form-group">
+                            <label>Year</label>
+                            <input type="number" name="year" required placeholder="2024">
+                        </div>
+                        <div class="form-group">
+                            <label>Month</label>
+                            <input type="number" name="month" min="1" max="12" required placeholder="1-12">
                         </div>
                     </div>
-
-                    <div id="fileName" style="margin: 15px 0; color: #333; font-weight: bold; text-align: center;"></div>
-
-                    <button type="submit" 
-                            id="batchSubmit" 
-                            style="margin-top: 15px;"
-                            {% if not model_loaded %}disabled{% endif %}>
-                        Dự đoán từ File
-                    </button>
+                    <button type="submit" class="btn">🔮 Predict Price</button>
                 </form>
 
-                <div class="loading" id="batchLoading">
-                    <div class="spinner"></div>
-                    <p>Đang xử lý file...</p>
+                <div id="singleResult" class="results" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Batch Prediction Tab -->
+        <div id="batch-tab" class="tab-content">
+            <div class="card">
+                <h2>📊 Batch Prediction</h2>
+                <p style="margin-bottom: 1.5rem;">Upload a CSV file with multiple properties for batch prediction.</p>
+                
+                <div class="file-upload" onclick="document.getElementById('csvFile').click()">
+                    <input type="file" id="csvFile" accept=".csv">
+                    <p style="font-size: 3rem;">📁</p>
+                    <p><strong>Click to upload CSV file</strong></p>
+                    <p style="font-size: 0.9rem; color: #666;">CSV should contain columns: country, city, date, area_m2, property_type, price_per_m2, year, month</p>
                 </div>
 
-                <div class="result" id="batchResult"></div>
+                <button onclick="uploadBatch()" class="btn" style="margin-top: 1.5rem;">📤 Upload and Predict</button>
+
+                <div id="batchResult" class="results" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="analytics-tab" class="tab-content">
+            <div class="card">
+                <h2>📈 Data Analytics & Insights</h2>
+                
+                <div id="statsGrid" class="stats-grid"></div>
+
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3>📊 Price Trend by Year</h3>
+                        <canvas id="priceYearChart"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3>🌍 Average Price by Country</h3>
+                        <canvas id="priceCountryChart"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3>🏙️ Top 10 Most Expensive Cities</h3>
+                        <canvas id="topCitiesChart"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3>🏠 Property Type Distribution</h3>
+                        <canvas id="propertyTypeChart"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3>💰 Price Distribution</h3>
+                        <canvas id="priceDistChart"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3>📐 Area vs Price Correlation</h3>
+                        <canvas id="areaPriceChart"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Single Prediction Form
-        document.getElementById('predictionForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
             
-            const loading = document.getElementById('singleLoading');
-            const result = document.getElementById('singleResult');
+            const tabMap = {
+                'single': ['single-tab', 0],
+                'batch': ['batch-tab', 1],
+                'analytics': ['analytics-tab', 2]
+            };
             
-            loading.classList.add('active');
-            result.style.display = 'none';
+            const [tabId, buttonIdx] = tabMap[tabName];
+            document.getElementById(tabId).classList.add('active');
+            document.querySelectorAll('.tab-button')[buttonIdx].classList.add('active');
+            
+            if (tabName === 'analytics' && !chartsInitialized) {
+                loadAnalytics();
+            }
+        }
+
+        // Display model info
+        async function displayModelInfo() {
+            const modelInfo = document.getElementById('modelInfo');
+            modelInfo.innerHTML = '⏳ Loading model information...';
             
             try {
-                const formData = new FormData(e.target);
-                const response = await fetch('/predict', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    result.className = 'result success';
-                    result.innerHTML = `
-                        <h3>✓ Kết quả dự đoán</h3>
-                        <div class="price">${data.formatted_prediction} VND</div>
-                        <p style="margin-top: 10px; color: #666;">
-                            Giá dự đoán: ${data.formatted_prediction}
-                        </p>
-                    `;
-                } else {
-                    result.className = 'result error';
-                    result.innerHTML = `
-                        <h3>✗ Lỗi</h3>
-                        <p>${data.error}</p>
-                    `;
-                }
-                
-                result.style.display = 'block';
+                const response = await fetch('/');
+                const html = await response.text();
+                modelInfo.innerHTML = '<strong>✅ Model loaded and ready for predictions</strong>';
             } catch (error) {
-                result.className = 'result error';
-                result.innerHTML = `
-                    <h3>✗ Lỗi</h3>
-                    <p>Không thể kết nối đến server: ${error.message}</p>
-                `;
-                result.style.display = 'block';
-            } finally {
-                loading.classList.remove('active');
+                modelInfo.innerHTML = '<strong>⚠️ Error loading model</strong>';
             }
-        });
+        }
 
-        // File upload handling
-        const fileInput = document.getElementById('fileInput');
-        const fileName = document.getElementById('fileName');
-        
-        fileInput.addEventListener('change', (e) => {
-            if (e.target.files.length > 0) {
-                fileName.textContent = `📄 ${e.target.files[0].name}`;
-            }
-        });
-
-        // Batch Prediction Form
-        document.getElementById('batchForm').addEventListener('submit', async (e) => {
+        // Single prediction
+        document.getElementById('singleForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
-            const loading = document.getElementById('batchLoading');
-            const result = document.getElementById('batchResult');
+            const formData = new FormData(e.target);
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
             
+            const resultDiv = document.getElementById('singleResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Predicting...</p></div>';
+            
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <div class="result-box">
+                            🏠 Predicted Price: $${result.prediction.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Error: ${result.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Request failed: ${error.message}</div>`;
+            }
+        });
+
+        // Batch prediction
+        async function uploadBatch() {
+            const fileInput = document.getElementById('csvFile');
             if (!fileInput.files[0]) {
-                alert('Vui lòng chọn file CSV');
+                alert('Please select a CSV file first!');
                 return;
             }
             
-            loading.classList.add('active');
-            result.style.display = 'none';
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            
+            const resultDiv = document.getElementById('batchResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Processing batch predictions...</p></div>';
             
             try {
-                const formData = new FormData();
-                formData.append('file', fileInput.files[0]);
-                
                 const response = await fetch('/predict_batch', {
                     method: 'POST',
                     body: formData
                 });
                 
-                const data = await response.json();
+                const result = await response.json();
                 
-                if (data.success) {
-                    let tableHTML = `
-                        <h3>✓ Dự đoán thành công</h3>
-                        <p>Tổng số dòng: ${data.count}</p>
-                        
+                if (result.success) {
+                    const stats = `
                         <div class="stats-grid">
                             <div class="stat-card">
-                                <label>Trung bình</label>
-                                <span>${data.statistics.mean.toLocaleString('vi-VN', {maximumFractionDigits: 0})}</span>
+                                <div class="stat-value">${result.count}</div>
+                                <div class="stat-label">Predictions</div>
                             </div>
                             <div class="stat-card">
-                                <label>Nhỏ nhất</label>
-                                <span>${data.statistics.min.toLocaleString('vi-VN', {maximumFractionDigits: 0})}</span>
+                                <div class="stat-value">$${(result.statistics.mean / 1000).toFixed(0)}K</div>
+                                <div class="stat-label">Average</div>
                             </div>
                             <div class="stat-card">
-                                <label>Lớn nhất</label>
-                                <span>${data.statistics.max.toLocaleString('vi-VN', {maximumFractionDigits: 0})}</span>
+                                <div class="stat-value">$${(result.statistics.min / 1000).toFixed(0)}K</div>
+                                <div class="stat-label">Minimum</div>
                             </div>
                             <div class="stat-card">
-                                <label>Độ lệch chuẩn</label>
-                                <span>${data.statistics.std.toLocaleString('vi-VN', {maximumFractionDigits: 0})}</span>
+                                <div class="stat-value">$${(result.statistics.max / 1000).toFixed(0)}K</div>
+                                <div class="stat-label">Maximum</div>
                             </div>
                         </div>
-                        
-                        <table class="predictions-table">
-                            <thead>
-                                <tr>
-                                    <th>STT</th>
-                                    <th>Giá dự đoán (VND)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                        <div class="result-box">✅ Batch prediction completed successfully!</div>
                     `;
-                    
-                    data.predictions.forEach(pred => {
-                        tableHTML += `
-                            <tr>
-                                <td>${pred.row}</td>
-                                <td>${pred.formatted}</td>
-                            </tr>
-                        `;
-                    });
-                    
-                    tableHTML += '</tbody></table>';
-                    
-                    if (data.count > 100) {
-                        tableHTML += `<p style="margin-top: 10px; color: #666; font-style: italic;">
-                            * Chỉ hiển thị 100 dòng đầu tiên
-                        </p>`;
-                    }
-                    
-                    result.className = 'result success';
-                    result.innerHTML = tableHTML;
+                    resultDiv.innerHTML = stats;
                 } else {
-                    result.className = 'result error';
-                    result.innerHTML = `
-                        <h3>✗ Lỗi</h3>
-                        <p>${data.error}</p>
-                    `;
+                    resultDiv.innerHTML = `<div class="error">❌ Error: ${result.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Request failed: ${error.message}</div>`;
+            }
+        }
+
+        // Analytics
+        let chartsInitialized = false;
+        let chartInstances = {};
+
+        async function loadAnalytics() {
+            if (chartsInitialized) return;
+            
+            try {
+                const response = await fetch('/analytics');
+                const result = await response.json();
+                
+                if (!result.success) {
+                    alert('Error loading analytics: ' + result.error);
+                    return;
                 }
                 
-                result.style.display = 'block';
+                const data = result.data;
+                
+                displayStatistics(data.statistics);
+                createPriceYearChart(data.price_by_year);
+                createPriceCountryChart(data.price_by_country);
+                createTopCitiesChart(data.top_cities);
+                createPropertyTypeChart(data.property_types);
+                createPriceDistChart(data.price_distribution);
+                createAreaPriceChart(data.area_price_scatter);
+                
+                chartsInitialized = true;
             } catch (error) {
-                result.className = 'result error';
-                result.innerHTML = `
-                    <h3>✗ Lỗi</h3>
-                    <p>Không thể kết nối đến server: ${error.message}</p>
-                `;
-                result.style.display = 'block';
-            } finally {
-                loading.classList.remove('active');
+                console.error('Error loading analytics:', error);
+                alert('Failed to load analytics data');
             }
-        });
-
-        // Drag and drop for file upload
-        const fileUpload = document.querySelector('.file-upload');
-        
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            fileUpload.addEventListener(eventName, preventDefaults, false);
-        });
-        
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
         }
-        
-        ['dragenter', 'dragover'].forEach(eventName => {
-            fileUpload.addEventListener(eventName, () => {
-                fileUpload.style.background = '#f8f9fa';
+
+        function displayStatistics(stats) {
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${stats.total_records.toLocaleString()}</div>
+                    <div class="stat-label">Total Records</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">$${(stats.avg_price / 1000).toFixed(0)}K</div>
+                    <div class="stat-label">Average Price</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">$${(stats.median_price / 1000).toFixed(0)}K</div>
+                    <div class="stat-label">Median Price</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.total_cities}</div>
+                    <div class="stat-label">Cities</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.total_countries}</div>
+                    <div class="stat-label">Countries</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.year_range}</div>
+                    <div class="stat-label">Year Range</div>
+                </div>
+            `;
+        }
+
+        function createPriceYearChart(data) {
+            const ctx = document.getElementById('priceYearChart').getContext('2d');
+            chartInstances.priceYear = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Average Price',
+                        data: data.mean,
+                        borderColor: '#6a11cb',
+                        backgroundColor: 'rgba(106, 17, 203, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Median Price',
+                        data: data.median,
+                        borderColor: '#2575fc',
+                        backgroundColor: 'rgba(37, 117, 252, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: true } },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: { callback: value => '$' + (value / 1000).toFixed(0) + 'K' }
+                        }
+                    }
+                }
             });
-        });
-        
-        ['dragleave', 'drop'].forEach(eventName => {
-            fileUpload.addEventListener(eventName, () => {
-                fileUpload.style.background = 'white';
+        }
+
+        function createPriceCountryChart(data) {
+            const ctx = document.getElementById('priceCountryChart').getContext('2d');
+            chartInstances.priceCountry = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Average Price',
+                        data: data.mean,
+                        backgroundColor: ['#6a11cb', '#2575fc', '#667eea']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { callback: value => '$' + (value / 1000).toFixed(0) + 'K' }
+                        }
+                    }
+                }
             });
-        });
-        
-        fileUpload.addEventListener('drop', (e) => {
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                fileInput.files = files;
-                fileName.textContent = `📄 ${files[0].name}`;
-            }
-        });
+        }
+
+        function createTopCitiesChart(data) {
+            const ctx = document.getElementById('topCitiesChart').getContext('2d');
+            chartInstances.topCities = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Average Price',
+                        data: data.values,
+                        backgroundColor: 'rgba(106, 17, 203, 0.7)',
+                        borderColor: '#6a11cb'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { callback: value => '$' + (value / 1000).toFixed(0) + 'K' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createPropertyTypeChart(data) {
+            const ctx = document.getElementById('propertyTypeChart').getContext('2d');
+            const colors = ['#6a11cb', '#2575fc', '#667eea', '#764ba2', '#f093fb', '#4facfe', '#00f2fe', '#43e97b', '#fa709a', '#fee140'];
+            chartInstances.propertyType = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.values,
+                        backgroundColor: colors.slice(0, data.labels.length),
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'right' } }
+                }
+            });
+        }
+
+        function createPriceDistChart(data) {
+            const ctx = document.getElementById('priceDistChart').getContext('2d');
+            chartInstances.priceDist = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Frequency',
+                        data: data.values,
+                        backgroundColor: 'rgba(37, 117, 252, 0.6)',
+                        borderColor: '#2575fc'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { callback: value => value.toLocaleString() }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createAreaPriceChart(data) {
+            const ctx = document.getElementById('areaPriceChart').getContext('2d');
+            const scatterData = data.area.map((area, i) => ({ x: area, y: data.price[i] }));
+            
+            chartInstances.areaPrice = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Area vs Price',
+                        data: scatterData,
+                        backgroundColor: 'rgba(106, 17, 203, 0.5)',
+                        borderColor: '#6a11cb',
+                        pointRadius: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { title: { display: true, text: 'Area (m²)' } },
+                        y: {
+                            title: { display: true, text: 'Price ($)' },
+                            ticks: { callback: value => '$' + (value / 1000).toFixed(0) + 'K' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize
+        displayModelInfo();
     </script>
 </body>
 </html>

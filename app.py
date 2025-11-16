@@ -4,6 +4,7 @@ Flask web application for house price prediction
 from flask import Flask, render_template, request, jsonify
 from pathlib import Path
 import pandas as pd
+import numpy as np
 import joblib
 import traceback
 
@@ -220,6 +221,94 @@ def reload_model():
             'success': False,
             'error': str(e)
         })
+
+@app.route('/analytics', methods=['GET'])
+def analytics():
+    """Get analytics data for visualization"""
+    try:
+        # Load sample data for analysis
+        data_path = Path('Data/cleaned_real_estate.csv')
+        if not data_path.exists():
+            return jsonify({
+                'success': False,
+                'error': 'Data file not found. Please ensure cleaned_real_estate.csv exists in Data folder.'
+            }), 404
+        
+        # Load sample of data (limit to 10000 rows for performance)
+        df = pd.read_csv(data_path, nrows=10000)
+        
+        # Price distribution by year
+        price_by_year = df.groupby('year')['price'].agg(['mean', 'median', 'count']).reset_index()
+        price_by_year = price_by_year[price_by_year['year'] >= 2015]  # Last 10 years
+        
+        # Price distribution by country
+        price_by_country = df.groupby('country')['price'].agg(['mean', 'median', 'count']).reset_index()
+        
+        # Top 10 cities by average price
+        top_cities = df.groupby('city')['price'].mean().nlargest(10).reset_index()
+        
+        # Property type distribution
+        property_types = df['property_type'].value_counts().head(10).reset_index()
+        property_types.columns = ['property_type', 'count']
+        
+        # Price distribution histogram
+        price_hist, price_bins = np.histogram(df['price'], bins=20)
+        price_bins_centers = [(price_bins[i] + price_bins[i+1])/2 for i in range(len(price_bins)-1)]
+        
+        # Area vs Price correlation
+        area_price = df[['area_m2', 'price']].dropna().sample(min(1000, len(df)))
+        
+        analytics_data = {
+            'success': True,
+            'data': {
+                'price_by_year': {
+                    'labels': price_by_year['year'].tolist(),
+                    'mean': price_by_year['mean'].round(2).tolist(),
+                    'median': price_by_year['median'].round(2).tolist(),
+                    'count': price_by_year['count'].tolist()
+                },
+                'price_by_country': {
+                    'labels': price_by_country['country'].tolist(),
+                    'mean': price_by_country['mean'].round(2).tolist(),
+                    'count': price_by_country['count'].tolist()
+                },
+                'top_cities': {
+                    'labels': top_cities['city'].tolist(),
+                    'values': top_cities['price'].round(2).tolist()
+                },
+                'property_types': {
+                    'labels': property_types['property_type'].tolist(),
+                    'values': property_types['count'].tolist()
+                },
+                'price_distribution': {
+                    'labels': [f'{int(x):,}' for x in price_bins_centers],
+                    'values': price_hist.tolist()
+                },
+                'area_price_scatter': {
+                    'area': area_price['area_m2'].tolist(),
+                    'price': area_price['price'].tolist()
+                },
+                'statistics': {
+                    'total_records': len(df),
+                    'avg_price': float(df['price'].mean()),
+                    'median_price': float(df['price'].median()),
+                    'min_price': float(df['price'].min()),
+                    'max_price': float(df['price'].max()),
+                    'total_cities': int(df['city'].nunique()),
+                    'total_countries': int(df['country'].nunique()),
+                    'year_range': f"{df['year'].min()} - {df['year'].max()}"
+                }
+            }
+        }
+        
+        return jsonify(analytics_data)
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Error loading analytics: {str(e)}',
+            'traceback': traceback.format_exc()
+        }), 500
 
 
 if __name__ == '__main__':
