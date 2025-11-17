@@ -590,8 +590,12 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label><i class="fas fa-calendar"></i> Date (YYYY-MM-DD)</label>
-                            <input type="text" name="date" required placeholder="2024-01-01">
+                            <label><i class="fas fa-calendar-alt"></i> Year</label>
+                            <input type="number" name="year" required placeholder="2024" min="1990" max="2030">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fas fa-calendar-day"></i> Month</label>
+                            <input type="number" name="month" required min="1" max="12" placeholder="1-12">
                         </div>
                         <div class="form-group">
                             <label><i class="fas fa-ruler-combined"></i> Area (m²)</label>
@@ -604,14 +608,6 @@
                         <div class="form-group">
                             <label><i class="fas fa-dollar-sign"></i> Price per m²</label>
                             <input type="number" name="price_per_m2" step="0.01" required placeholder="5000">
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-calendar-alt"></i> Year</label>
-                            <input type="number" name="year" required placeholder="2024">
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-calendar-day"></i> Month</label>
-                            <input type="number" name="month" min="1" max="12" required placeholder="1-12">
                         </div>
                     </div>
                     <button type="submit" class="btn">
@@ -944,17 +940,28 @@
             availableCountries.forEach(country => {
                 const checkboxDiv = document.createElement('div');
                 checkboxDiv.className = 'country-checkbox checked';
-                checkboxDiv.onclick = function() {
-                    const checkbox = this.querySelector('input');
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `country_${country}`;
+                checkbox.value = country;
+                checkbox.checked = true;
+                
+                const label = document.createElement('label');
+                label.htmlFor = `country_${country}`;
+                label.textContent = country;
+                label.style.cursor = 'pointer';
+                
+                // Single click handler on div to toggle both checkbox and visual state
+                checkboxDiv.onclick = function(e) {
+                    // Toggle checkbox state
                     checkbox.checked = !checkbox.checked;
-                    this.classList.toggle('checked', checkbox.checked);
+                    // Update visual state
+                    checkboxDiv.classList.toggle('checked', checkbox.checked);
                 };
                 
-                checkboxDiv.innerHTML = `
-                    <input type="checkbox" id="country_${country}" value="${country}" checked onclick="event.stopPropagation();">
-                    <label for="country_${country}">${country}</label>
-                `;
-                
+                checkboxDiv.appendChild(checkbox);
+                checkboxDiv.appendChild(label);
                 filterDiv.appendChild(checkboxDiv);
             });
         }

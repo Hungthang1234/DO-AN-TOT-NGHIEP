@@ -136,6 +136,9 @@ def predict():
         # Convert form data to DataFrame
         input_data = {}
         for key, value in form_data.items():
+            # Skip empty values
+            if not value or value.strip() == '':
+                continue
             # Try to convert to numeric if possible
             try:
                 input_data[key] = float(value)
@@ -147,16 +150,27 @@ def predict():
         
         # Align columns if feature_names available
         if feature_names:
-            # Add missing columns with NaN
+            # Add missing columns with 0
             for col in feature_names:
                 if col not in df.columns:
-                    df[col] = pd.NA
+                    df[col] = 0.0
             
             # Reorder to match training
             df = df[feature_names]
         
+        # Convert all columns to numeric, coerce errors to NaN, then fill with 0
+        for col in df.columns:
+            if df[col].dtype == 'object':
+                df[col] = pd.to_numeric(df[col], errors='coerce')
+        
+        # Fill any NA/NaN values with 0
+        df = df.fillna(0.0).replace([pd.NA], 0.0)
+        
         # Make prediction
         prediction = pipeline.predict(df)[0]
+        
+        # Ensure prediction is not negative
+        prediction = max(0, prediction)
         
         return jsonify({
             'success': True,
@@ -221,6 +235,9 @@ def predict_batch():
         
         # Make predictions
         predictions = pipeline.predict(df)
+        
+        # Ensure all predictions are non-negative
+        predictions = np.maximum(0, predictions)
         
         # Prepare results
         results = []
@@ -297,7 +314,10 @@ def analytics():
         
         # Price distribution by year
         price_by_year = df.groupby('year')['price'].agg(['mean', 'median', 'count']).reset_index()
-        price_by_year = price_by_year[price_by_year['year'] >= 2015]  # Last 10 years
+        # Filter to recent years if data available, otherwise show all
+        if len(price_by_year) > 10:
+            price_by_year = price_by_year.nlargest(10, 'year')
+        price_by_year = price_by_year.sort_values('year')
         
         # Price distribution by country
         price_by_country = df.groupby('country')['price'].agg(['mean', 'median', 'count']).reset_index()
