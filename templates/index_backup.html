@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>House Price Prediction & Analytics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .tab-button {
+            padding: 0.75rem 2rem;
+            background: white;
+            border: 3px solid white;
+            color: #667eea;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .tab-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        .tab-button.active {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 2rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .chart-container h3 {
+            margin-top: 0;
+            color: #6a11cb;
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .results {
+            margin-top: 2rem;
+        }
+
+        .result-box {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #ff6b6b;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .model-info {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
+
+        .file-upload {
+            border: 2px dashed #667eea;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .file-upload:hover {
+            background: #f8f9fa;
+            border-color: #6a11cb;
+        }
+
+        .file-upload input {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏠 House Price Prediction & Analytics</h1>
+            <p class="subtitle">AI-powered real estate price prediction with data insights</p>
+        </header>
+
+        <div class="tab-buttons">
+            <button class="tab-button active" onclick="switchTab('single')">Single Prediction</button>
+            <button class="tab-button" onclick="switchTab('batch')">Batch Prediction</button>
+            <button class="tab-button" onclick="switchTab('analytics')">Data Analytics</button>
+        </div>
+
+        <!-- Single Prediction Tab -->
+        <div id="single-tab" class="tab-content active">
+            <div class="card">
+                <h2>🎯 Single Property Prediction</h2>
+                <div id="modelInfo" class="model-info"></div>
+                
+                <form id="singleForm">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Country</label>
+                            <select name="country" required>
+                                <option value="">Select...</option>
+                                <option value="Singapore">Singapore</option>
+                                <option value="Australia">Australia</option>
+                                <option value="USA">USA</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>City</label>
+                            <input type="text" name="city" required placeholder="e.g., TAMPINES">
+                        </div>
+                        <div class="form-group">
+                            <label>Date (YYYY-MM-DD)</label>
+                            <input type="text" name="date" required placeholder="2024-01-01">
+                        </div>
+                        <div class="form-group">
+                            <label>Area (m²)</label>
+                            <input type="number" name="area_m2" step="0.01" required placeholder="100">
+                        </div>
+                        <div class="form-group">
+                            <label>Property Type</label>
+                            <input type="text" name="property_type" required placeholder="e.g., 4 ROOM">
+                        </div>
+                        <div class="form-group">
+                            <label>Price per m²</label>
+                            <input type="number" name="price_per_m2" step="0.01" required placeholder="5000">
+                        </div>
+                        <div class="form-group">
+                            <label>Year</label>
+                            <input type="number" name="year" required placeholder="2024">
+                        </div>
+                        <div class="form-group">
+                            <label>Month</label>
+                            <input type="number" name="month" min="1" max="12" required placeholder="1-12">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn">🔮 Predict Price</button>
+                </form>
+
+                <div id="singleResult" class="results" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Batch Prediction Tab -->
+        <div id="batch-tab" class="tab-content">
+            <div class="card">
+                <h2>📊 Batch Prediction</h2>
+                <p style="margin-bottom: 1.5rem;">Upload a CSV file with multiple properties for batch prediction.</p>
+                
+                <div class="file-upload" onclick="document.getElementById('csvFile').click()">
+                    <input type="file" id="csvFile" accept=".csv">
+                    <p style="font-size: 3rem;">📁</p>
+                    <p><strong>Click to upload CSV file</strong></p>
+                    <p style="font-size: 0.9rem; color: #666;">CSV should contain columns: country, city, date, area_m2, property_type, price_per_m2, year, month</p>
+                </div>
+
+                <button onclick="uploadBatch()" class="btn" style="margin-top: 1.5rem;">📤 Upload and Predict</button>
+
+                <div id="batchResult" class="results" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div id="analytics-tab" class="tab-content">
+            <div class="card">
+                <h2>📈 Data Analytics & Insights</h2>
+                
+                <div id="statsGrid" class="stats-grid"></div>
+
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3>📊 Price Trend by Year</h3>
+                        <canvas id="priceYearChart"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3>🌍 Average Price by Country</h3>
+                        <canvas id="priceCountryChart"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3>🏙️ Top 10 Most Expensive Cities</h3>
+                        <canvas id="topCitiesChart"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3>🏠 Property Type Distribution</h3>
+                        <canvas id="propertyTypeChart"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3>💰 Price Distribution</h3>
+                        <canvas id="priceDistChart"></canvas>
+                    </div>
+
+                    <div class="chart-container">
+                        <h3>📐 Area vs Price Correlation</h3>
+                        <canvas id="areaPriceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Tab switching
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            const tabMap = {
+                'single': ['single-tab', 0],
+                'batch': ['batch-tab', 1],
+                'analytics': ['analytics-tab', 2]
+            };
+            
+            const [tabId, buttonIdx] = tabMap[tabName];
+            document.getElementById(tabId).classList.add('active');
+            document.querySelectorAll('.tab-button')[buttonIdx].classList.add('active');
+            
+            if (tabName === 'analytics' && !chartsInitialized) {
+                loadAnalytics();
+            }
+        }
+
+        // Display model info
+        async function displayModelInfo() {
+            const modelInfo = document.getElementById('modelInfo');
+            modelInfo.innerHTML = '⏳ Loading model information...';
+            
+            try {
+                const response = await fetch('/');
+                const html = await response.text();
+                modelInfo.innerHTML = '<strong>✅ Model loaded and ready for predictions</strong>';
+            } catch (error) {
+                modelInfo.innerHTML = '<strong>⚠️ Error loading model</strong>';
+            }
+        }
+
+        // Single prediction
+        document.getElementById('singleForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = {};
+            formData.forEach((value, key) => {
+                data[key] = value;
+            });
+            
+            const resultDiv = document.getElementById('singleResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Predicting...</p></div>';
+            
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <div class="result-box">
+                            🏠 Predicted Price: $${result.prediction.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Error: ${result.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Request failed: ${error.message}</div>`;
+            }
+        });
+
+        // Batch prediction
+        async function uploadBatch() {
+            const fileInput = document.getElementById('csvFile');
+            if (!fileInput.files[0]) {
+                alert('Please select a CSV file first!');
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            
+            const resultDiv = document.getElementById('batchResult');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<div class="loading"><div class="spinner"></div><p>Processing batch predictions...</p></div>';
+            
+            try {
+                const response = await fetch('/predict_batch', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    const stats = `
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <div class="stat-value">${result.count}</div>
+                                <div class="stat-label">Predictions</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">$${(result.statistics.mean / 1000).toFixed(0)}K</div>
+                                <div class="stat-label">Average</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">$${(result.statistics.min / 1000).toFixed(0)}K</div>
+                                <div class="stat-label">Minimum</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">$${(result.statistics.max / 1000).toFixed(0)}K</div>
+                                <div class="stat-label">Maximum</div>
+                            </div>
+                        </div>
+                        <div class="result-box">✅ Batch prediction completed successfully!</div>
+                    `;
+                    resultDiv.innerHTML = stats;
+                } else {
+                    resultDiv.innerHTML = `<div class="error">❌ Error: ${result.error}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">❌ Request failed: ${error.message}</div>`;
+            }
+        }
+
+        // Analytics
+        let chartsInitialized = false;
+        let chartInstances = {};
+
+        async function loadAnalytics() {
+            if (chartsInitialized) return;
+            
+            try {
+                const response = await fetch('/analytics');
+                const result = await response.json();
+                
+                if (!result.success) {
+                    alert('Error loading analytics: ' + result.error);
+                    return;
+                }
+                
+                const data = result.data;
+                
+                displayStatistics(data.statistics);
+                createPriceYearChart(data.price_by_year);
+                createPriceCountryChart(data.price_by_country);
+                createTopCitiesChart(data.top_cities);
+                createPropertyTypeChart(data.property_types);
+                createPriceDistChart(data.price_distribution);
+                createAreaPriceChart(data.area_price_scatter);
+                
+                chartsInitialized = true;
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+                alert('Failed to load analytics data');
+            }
+        }
+
+        function displayStatistics(stats) {
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-value">${stats.total_records.toLocaleString()}</div>
+                    <div class="stat-label">Total Records</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">$${(stats.avg_price / 1000).toFixed(0)}K</div>
+                    <div class="stat-label">Average Price</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">$${(stats.median_price / 1000).toFixed(0)}K</div>
+                    <div class="stat-label">Median Price</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.total_cities}</div>
+                    <div class="stat-label">Cities</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.total_countries}</div>
+                    <div class="stat-label">Countries</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">${stats.year_range}</div>
+                    <div class="stat-label">Year Range</div>
+                </div>
+            `;
+        }
+
+        function createPriceYearChart(data) {
+            const ctx = document.getElementById('priceYearChart').getContext('2d');
+            chartInstances.priceYear = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Average Price',
+                        data: data.mean,
+                        borderColor: '#6a11cb',
+                        backgroundColor: 'rgba(106, 17, 203, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Median Price',
+                        data: data.median,
+                        borderColor: '#2575fc',
+                        backgroundColor: 'rgba(37, 117, 252, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: true } },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: { callback: value => '$' + (value / 1000).toFixed(0) + 'K' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createPriceCountryChart(data) {
+            const ctx = document.getElementById('priceCountryChart').getContext('2d');
+            chartInstances.priceCountry = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Average Price',
+                        data: data.mean,
+                        backgroundColor: ['#6a11cb', '#2575fc', '#667eea']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { callback: value => '$' + (value / 1000).toFixed(0) + 'K' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createTopCitiesChart(data) {
+            const ctx = document.getElementById('topCitiesChart').getContext('2d');
+            chartInstances.topCities = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Average Price',
+                        data: data.values,
+                        backgroundColor: 'rgba(106, 17, 203, 0.7)',
+                        borderColor: '#6a11cb'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { callback: value => '$' + (value / 1000).toFixed(0) + 'K' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createPropertyTypeChart(data) {
+            const ctx = document.getElementById('propertyTypeChart').getContext('2d');
+            const colors = ['#6a11cb', '#2575fc', '#667eea', '#764ba2', '#f093fb', '#4facfe', '#00f2fe', '#43e97b', '#fa709a', '#fee140'];
+            chartInstances.propertyType = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.values,
+                        backgroundColor: colors.slice(0, data.labels.length),
+                        borderColor: '#fff',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { position: 'right' } }
+                }
+            });
+        }
+
+        function createPriceDistChart(data) {
+            const ctx = document.getElementById('priceDistChart').getContext('2d');
+            chartInstances.priceDist = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Frequency',
+                        data: data.values,
+                        backgroundColor: 'rgba(37, 117, 252, 0.6)',
+                        borderColor: '#2575fc'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { callback: value => value.toLocaleString() }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createAreaPriceChart(data) {
+            const ctx = document.getElementById('areaPriceChart').getContext('2d');
+            const scatterData = data.area.map((area, i) => ({ x: area, y: data.price[i] }));
+            
+            chartInstances.areaPrice = new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Area vs Price',
+                        data: scatterData,
+                        backgroundColor: 'rgba(106, 17, 203, 0.5)',
+                        borderColor: '#6a11cb',
+                        pointRadius: 3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { title: { display: true, text: 'Area (m²)' } },
+                        y: {
+                            title: { display: true, text: 'Price ($)' },
+                            ticks: { callback: value => '$' + (value / 1000).toFixed(0) + 'K' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize
+        displayModelInfo();
+    </script>
+</body>
+</html>
