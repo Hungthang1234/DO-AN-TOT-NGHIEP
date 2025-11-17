@@ -40,6 +40,26 @@ def load_model():
 load_model()
 
 
+@app.route('/get_cities/<country>')
+def get_cities(country):
+    """Get list of cities for a specific country"""
+    try:
+        data_path = Path("Data/cleaned_real_estate.csv")
+        if not data_path.exists():
+            return jsonify({'success': False, 'error': 'Data file not found'})
+        
+        # Read only necessary columns
+        df = pd.read_csv(data_path, usecols=['country', 'city'])
+        
+        # Filter by country and get unique cities
+        cities = df[df['country'] == country]['city'].unique().tolist()
+        cities.sort()
+        
+        return jsonify({'success': True, 'cities': cities})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
 @app.route('/')
 def home():
     """Render the main page"""

@@ -533,7 +533,7 @@
                     <div class="form-grid">
                         <div class="form-group">
                             <label><i class="fas fa-globe"></i> Country</label>
-                            <select name="country" required>
+                            <select name="country" id="countrySelect" required onchange="loadCities()">
                                 <option value="">Select Country...</option>
                                 <option value="Singapore">🇸🇬 Singapore</option>
                                 <option value="Australia">🇦🇺 Australia</option>
@@ -542,7 +542,9 @@
                         </div>
                         <div class="form-group">
                             <label><i class="fas fa-city"></i> City</label>
-                            <input type="text" name="city" required placeholder="e.g., TAMPINES">
+                            <select name="city" id="citySelect" required>
+                                <option value="">Select Country First...</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label><i class="fas fa-calendar"></i> Date (YYYY-MM-DD)</label>
@@ -709,6 +711,44 @@
             
             if (tabName === 'analytics' && !chartsInitialized) {
                 loadAnalytics();
+            }
+        }
+
+        // Load cities based on selected country
+        async function loadCities() {
+            const countrySelect = document.getElementById('countrySelect');
+            const citySelect = document.getElementById('citySelect');
+            const country = countrySelect.value;
+            
+            if (!country) {
+                citySelect.innerHTML = '<option value="">Select Country First...</option>';
+                citySelect.disabled = true;
+                return;
+            }
+            
+            citySelect.innerHTML = '<option value="">Loading cities...</option>';
+            citySelect.disabled = true;
+            
+            try {
+                const response = await fetch(`/get_cities/${country}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    citySelect.innerHTML = '<option value="">Select City...</option>';
+                    result.cities.forEach(city => {
+                        const option = document.createElement('option');
+                        option.value = city;
+                        option.textContent = city;
+                        citySelect.appendChild(option);
+                    });
+                    citySelect.disabled = false;
+                } else {
+                    citySelect.innerHTML = '<option value="">Error loading cities</option>';
+                    alert('Error loading cities: ' + result.error);
+                }
+            } catch (error) {
+                citySelect.innerHTML = '<option value="">Error loading cities</option>';
+                console.error('Error loading cities:', error);
             }
         }
 
