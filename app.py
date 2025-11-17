@@ -39,23 +39,44 @@ def load_model():
 
 load_model()
 
+# Cache for city data
+CITY_CACHE = {}
+
+def load_cities_data():
+    """Load and cache city data from CSV"""
+    global CITY_CACHE
+    try:
+        data_path = Path("Data/cleaned_real_estate.csv")
+        if not data_path.exists():
+            print("⚠ Data file not found for city lookup")
+            return
+        
+        print("Loading city data...")
+        # Read only necessary columns
+        df = pd.read_csv(data_path, usecols=['country', 'city'])
+        
+        # Group by country and get unique cities
+        for country in df['country'].unique():
+            cities = df[df['country'] == country]['city'].unique().tolist()
+            cities.sort()
+            CITY_CACHE[country] = cities
+        
+        print(f"✓ Loaded cities for {len(CITY_CACHE)} countries")
+    except Exception as e:
+        print(f"❌ Error loading city data: {e}")
+
+# Load cities data at startup
+load_cities_data()
+
 
 @app.route('/get_cities/<country>')
 def get_cities(country):
     """Get list of cities for a specific country"""
     try:
-        data_path = Path("Data/cleaned_real_estate.csv")
-        if not data_path.exists():
-            return jsonify({'success': False, 'error': 'Data file not found'})
+        if country not in CITY_CACHE:
+            return jsonify({'success': False, 'error': f'No cities found for {country}'})
         
-        # Read only necessary columns
-        df = pd.read_csv(data_path, usecols=['country', 'city'])
-        
-        # Filter by country and get unique cities
-        cities = df[df['country'] == country]['city'].unique().tolist()
-        cities.sort()
-        
-        return jsonify({'success': True, 'cities': cities})
+        return jsonify({'success': True, 'cities': CITY_CACHE[country]})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
