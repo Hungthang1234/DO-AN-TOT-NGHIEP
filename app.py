@@ -69,6 +69,16 @@ def load_cities_data():
 load_cities_data()
 
 
+@app.route('/get_countries')
+def get_countries():
+    """Get list of all available countries"""
+    try:
+        countries = list(CITY_CACHE.keys())
+        return jsonify({'success': True, 'countries': countries})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
 @app.route('/get_cities/<country>')
 def get_cities(country):
     """Get list of cities for a specific country"""
@@ -267,6 +277,9 @@ def reload_model():
 def analytics():
     """Get analytics data for visualization"""
     try:
+        # Get country filter from query parameter
+        selected_countries = request.args.getlist('countries')
+        
         # Load sample data for analysis
         data_path = Path('Data/cleaned_real_estate.csv')
         if not data_path.exists():
@@ -277,6 +290,10 @@ def analytics():
         
         # Load sample of data (limit to 10000 rows for performance)
         df = pd.read_csv(data_path, nrows=10000)
+        
+        # Filter by selected countries if provided
+        if selected_countries and len(selected_countries) > 0:
+            df = df[df['country'].isin(selected_countries)]
         
         # Price distribution by year
         price_by_year = df.groupby('year')['price'].agg(['mean', 'median', 'count']).reset_index()

@@ -494,6 +494,49 @@
             }
         }
 
+        /* Country filter checkboxes */
+        .country-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.7rem 1.2rem;
+            background: var(--bg-white);
+            border: 2px solid var(--border-light);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            user-select: none;
+        }
+
+        .country-checkbox:hover {
+            border-color: var(--primary-blue);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .country-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+            accent-color: var(--primary-blue);
+        }
+
+        .country-checkbox label {
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .country-checkbox.checked {
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-blue) 100%);
+            border-color: var(--primary-blue);
+        }
+
+        .country-checkbox.checked label {
+            color: white;
+        }
+
         /* Smooth transitions for theme change */
         * {
             transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
@@ -612,6 +655,17 @@
             <div class="card">
                 <h2><i class="fas fa-chart-pie"></i> Data Analytics & Insights <span class="badge">Live Data</span></h2>
                 
+                <!-- Country Filter -->
+                <div style="margin-bottom: 2rem; padding: 1.5rem; background: var(--bg-light); border-radius: 12px; border: 2px solid var(--border-light);">
+                    <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-dark); font-size: 1rem;">
+                        <i class="fas fa-filter"></i> Filter by Countries
+                    </label>
+                    <div id="countryFilter" style="display: flex; flex-wrap: wrap; gap: 1rem;"></div>
+                    <button onclick="applyCountryFilter()" class="btn" style="margin-top: 1rem; width: auto; padding: 0.8rem 2rem;">
+                        <i class="fas fa-sync-alt"></i> Apply Filter
+                    </button>
+                </div>
+                
                 <div id="statsGrid" class="stats-grid"></div>
 
                 <div class="charts-grid">
@@ -709,8 +763,13 @@
             document.getElementById(tabId).classList.add('active');
             document.querySelectorAll('.tab-button')[buttonIdx].classList.add('active');
             
-            if (tabName === 'analytics' && !chartsInitialized) {
-                loadAnalytics();
+            if (tabName === 'analytics') {
+                if (availableCountries.length === 0) {
+                    loadCountries();
+                }
+                if (!chartsInitialized) {
+                    loadAnalytics();
+                }
             }
         }
 
@@ -860,12 +919,71 @@
         // Analytics
         let chartsInitialized = false;
         let chartInstances = {};
+        let availableCountries = [];
 
-        async function loadAnalytics() {
-            if (chartsInitialized) return;
-            
+        // Load available countries
+        async function loadCountries() {
             try {
-                const response = await fetch('/analytics');
+                const response = await fetch('/get_countries');
+                const result = await response.json();
+                
+                if (result.success) {
+                    availableCountries = result.countries;
+                    displayCountryFilter();
+                }
+            } catch (error) {
+                console.error('Error loading countries:', error);
+            }
+        }
+
+        // Display country filter checkboxes
+        function displayCountryFilter() {
+            const filterDiv = document.getElementById('countryFilter');
+            filterDiv.innerHTML = '';
+            
+            availableCountries.forEach(country => {
+                const checkboxDiv = document.createElement('div');
+                checkboxDiv.className = 'country-checkbox checked';
+                checkboxDiv.onclick = function() {
+                    const checkbox = this.querySelector('input');
+                    checkbox.checked = !checkbox.checked;
+                    this.classList.toggle('checked', checkbox.checked);
+                };
+                
+                checkboxDiv.innerHTML = `
+                    <input type="checkbox" id="country_${country}" value="${country}" checked onclick="event.stopPropagation();">
+                    <label for="country_${country}">${country}</label>
+                `;
+                
+                filterDiv.appendChild(checkboxDiv);
+            });
+        }
+
+        // Apply country filter and reload analytics
+        async function applyCountryFilter() {
+            const selectedCountries = [];
+            document.querySelectorAll('#countryFilter input[type="checkbox"]:checked').forEach(cb => {
+                selectedCountries.push(cb.value);
+            });
+            
+            if (selectedCountries.length === 0) {
+                alert('Please select at least one country');
+                return;
+            }
+            
+            await loadAnalytics(selectedCountries);
+        }
+
+        async function loadAnalytics(selectedCountries = null) {
+            try {
+                // Build query string for country filter
+                let url = '/analytics';
+                if (selectedCountries && selectedCountries.length > 0) {
+                    const params = selectedCountries.map(c => `countries=${encodeURIComponent(c)}`).join('&');
+                    url += '?' + params;
+                }
+                
+                const response = await fetch(url);
                 const result = await response.json();
                 
                 if (!result.success) {
@@ -876,6 +994,11 @@
                 const data = result.data;
                 
                 displayStatistics(data.statistics);
+                
+                // Destroy existing charts before creating new ones
+                Object.values(chartInstances).forEach(chart => chart.destroy());
+                chartInstances = {};
+                
                 createPriceYearChart(data.price_by_year);
                 createPriceCountryChart(data.price_by_country);
                 createTopCitiesChart(data.top_cities);
