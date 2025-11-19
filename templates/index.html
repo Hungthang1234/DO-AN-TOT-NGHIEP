@@ -181,6 +181,17 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        
+        @keyframes fadeInUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(30px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
 
         .card {
             background: var(--bg-white);
@@ -686,15 +697,73 @@
                 
                 <!-- Analytics Content -->
                 <div id="analyticsContent">
-                <!-- Country Filter -->
+                <!-- Advanced Filters -->
                 <div style="margin-bottom: 2rem; padding: 1.5rem; background: var(--bg-light); border-radius: 12px; border: 2px solid var(--border-light);">
-                    <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-dark); font-size: 1rem;">
-                        <i class="fas fa-filter"></i> Filter by Countries
-                    </label>
-                    <div id="countryFilter" style="display: flex; flex-wrap: wrap; gap: 1rem;"></div>
-                    <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
-                        <button onclick="applyCountryFilter()" class="btn" style="width: auto; padding: 0.8rem 2rem;">
-                            <i class="fas fa-sync-alt"></i> Apply Filter
+                    <h3 style="margin-bottom: 1.5rem; color: var(--text-dark);">
+                        <i class="fas fa-filter"></i> Advanced Filters
+                    </h3>
+                    
+                    <!-- Country Filter -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.8rem; font-weight: 600; color: var(--text-dark); font-size: 0.95rem;">
+                            <i class="fas fa-globe"></i> Countries
+                        </label>
+                        <div id="countryFilter" style="display: flex; flex-wrap: wrap; gap: 1rem;"></div>
+                    </div>
+                    
+                    <!-- Date Range Filter -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.8rem; font-weight: 600; color: var(--text-dark); font-size: 0.95rem;">
+                            <i class="fas fa-calendar-alt"></i> Year Range
+                        </label>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                            <div style="flex: 1; min-width: 150px;">
+                                <label style="font-size: 0.85rem; color: var(--text-medium); margin-bottom: 0.3rem; display: block;">From Year</label>
+                                <input type="number" id="analyticsYearFrom" min="1990" max="2025" value="2015" 
+                                       style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-light); border-radius: 8px; font-size: 0.95rem;">
+                            </div>
+                            <div style="flex: 1; min-width: 150px;">
+                                <label style="font-size: 0.85rem; color: var(--text-medium); margin-bottom: 0.3rem; display: block;">To Year</label>
+                                <input type="number" id="analyticsYearTo" min="1990" max="2025" value="2025" 
+                                       style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-light); border-radius: 8px; font-size: 0.95rem;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Property Type Filter -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.8rem; font-weight: 600; color: var(--text-dark); font-size: 0.95rem;">
+                            <i class="fas fa-home"></i> Property Types
+                        </label>
+                        <div id="propertyTypeFilter" style="display: flex; flex-wrap: wrap; gap: 0.8rem;"></div>
+                    </div>
+                    
+                    <!-- Price Range Filter -->
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.8rem; font-weight: 600; color: var(--text-dark); font-size: 0.95rem;">
+                            <i class="fas fa-dollar-sign"></i> Price Range (USD)
+                        </label>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
+                            <div style="flex: 1; min-width: 150px;">
+                                <label style="font-size: 0.85rem; color: var(--text-medium); margin-bottom: 0.3rem; display: block;">Min Price</label>
+                                <input type="number" id="analyticsPriceMin" min="0" step="10000" placeholder="No minimum" 
+                                       style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-light); border-radius: 8px; font-size: 0.95rem;">
+                            </div>
+                            <div style="flex: 1; min-width: 150px;">
+                                <label style="font-size: 0.85rem; color: var(--text-medium); margin-bottom: 0.3rem; display: block;">Max Price</label>
+                                <input type="number" id="analyticsPriceMax" min="0" step="10000" placeholder="No maximum" 
+                                       style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-light); border-radius: 8px; font-size: 0.95rem;">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <button onclick="applyAnalyticsFilters()" class="btn" style="width: auto; padding: 0.8rem 2rem;">
+                            <i class="fas fa-sync-alt"></i> Apply Filters
+                        </button>
+                        <button onclick="resetAnalyticsFilters()" class="btn" style="width: auto; padding: 0.8rem 2rem; background: var(--text-medium);">
+                            <i class="fas fa-undo"></i> Reset
                         </button>
                         <button onclick="exportAnalyticsData()" class="btn" style="width: auto; padding: 0.8rem 2rem; background: var(--accent-teal);">
                             <i class="fas fa-download"></i> Export Data (CSV)
@@ -733,6 +802,22 @@
                     <div class="chart-container">
                         <h3><i class="fas fa-chart-scatter"></i> Area vs Price Correlation</h3>
                         <canvas id="areaPriceChart"></canvas>
+                    </div>
+                    
+                    <!-- New Charts -->
+                    <div class="chart-container">
+                        <h3><i class="fas fa-calendar"></i> Monthly Trends</h3>
+                        <canvas id="monthlyTrendChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3><i class="fas fa-map-marked-alt"></i> Price Heatmap by City</h3>
+                        <canvas id="cityHeatmapChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3><i class="fas fa-chart-area"></i> Cumulative Price Growth</h3>
+                        <canvas id="cumulativeGrowthChart"></canvas>
                     </div>
                 </div>
                 </div> <!-- End analyticsContent -->
@@ -915,6 +1000,10 @@
             if (tabName === 'analytics') {
                 if (availableCountries.length === 0) {
                     loadCountries();
+                }
+                // Load property types filter
+                if (document.getElementById('propertyTypeFilter').children.length === 0) {
+                    loadPropertyTypes();
                 }
                 if (!chartsInitialized) {
                     loadAnalytics();
@@ -1343,8 +1432,48 @@ United States,Seattle,2024,12,150,5 ROOM`;
             });
         }
 
-        // Apply country filter and reload analytics
-        async function applyCountryFilter() {
+        // Load and display property type filter
+        async function loadPropertyTypes() {
+            const propertyTypes = ['2 ROOM', '3 ROOM', '4 ROOM', '5 ROOM', 'EXECUTIVE', 'MULTI-GENERATION'];
+            const filterDiv = document.getElementById('propertyTypeFilter');
+            filterDiv.innerHTML = '';
+            
+            propertyTypes.forEach(type => {
+                const checkboxDiv = document.createElement('div');
+                checkboxDiv.className = 'country-checkbox checked';
+                checkboxDiv.style.fontSize = '0.9rem';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `proptype_${type.replace(/\s+/g, '_')}`;
+                checkbox.value = type;
+                checkbox.checked = true;
+                
+                const label = document.createElement('label');
+                label.htmlFor = checkbox.id;
+                label.textContent = type;
+                label.style.cursor = 'pointer';
+                
+                checkbox.addEventListener('change', function() {
+                    checkboxDiv.classList.toggle('checked', this.checked);
+                });
+                
+                checkboxDiv.addEventListener('click', function(e) {
+                    if (e.target !== checkbox) {
+                        checkbox.checked = !checkbox.checked;
+                        checkbox.dispatchEvent(new Event('change'));
+                    }
+                });
+                
+                checkboxDiv.appendChild(checkbox);
+                checkboxDiv.appendChild(label);
+                filterDiv.appendChild(checkboxDiv);
+            });
+        }
+        
+        // Apply all filters and reload analytics
+        async function applyAnalyticsFilters() {
+            // Get country filter
             const selectedCountries = [];
             document.querySelectorAll('#countryFilter input[type="checkbox"]:checked').forEach(cb => {
                 selectedCountries.push(cb.value);
@@ -1355,7 +1484,62 @@ United States,Seattle,2024,12,150,5 ROOM`;
                 return;
             }
             
-            await loadAnalytics(selectedCountries);
+            // Get year range
+            const yearFrom = document.getElementById('analyticsYearFrom').value;
+            const yearTo = document.getElementById('analyticsYearTo').value;
+            
+            // Get property types
+            const selectedPropertyTypes = [];
+            document.querySelectorAll('#propertyTypeFilter input[type="checkbox"]:checked').forEach(cb => {
+                selectedPropertyTypes.push(cb.value);
+            });
+            
+            // Get price range
+            const priceMin = document.getElementById('analyticsPriceMin').value;
+            const priceMax = document.getElementById('analyticsPriceMax').value;
+            
+            // Build filters object
+            const filters = {
+                countries: selectedCountries,
+                year_from: yearFrom || null,
+                year_to: yearTo || null,
+                property_types: selectedPropertyTypes.length > 0 ? selectedPropertyTypes : null,
+                price_min: priceMin || null,
+                price_max: priceMax || null
+            };
+            
+            await loadAnalytics(filters);
+        }
+        
+        // Reset all filters
+        function resetAnalyticsFilters() {
+            // Reset country checkboxes
+            document.querySelectorAll('#countryFilter input[type="checkbox"]').forEach(cb => {
+                cb.checked = true;
+                cb.closest('.country-checkbox').classList.add('checked');
+            });
+            
+            // Reset year range
+            document.getElementById('analyticsYearFrom').value = '2015';
+            document.getElementById('analyticsYearTo').value = '2025';
+            
+            // Reset property types
+            document.querySelectorAll('#propertyTypeFilter input[type="checkbox"]').forEach(cb => {
+                cb.checked = true;
+                cb.closest('.country-checkbox').classList.add('checked');
+            });
+            
+            // Reset price range
+            document.getElementById('analyticsPriceMin').value = '';
+            document.getElementById('analyticsPriceMax').value = '';
+            
+            // Reload with default filters
+            loadAnalytics(null);
+        }
+        
+        // Apply country filter and reload analytics (kept for backward compatibility)
+        async function applyCountryFilter() {
+            await applyAnalyticsFilters();
         }
         
         // Export analytics data to CSV
@@ -1431,17 +1615,38 @@ United States,Seattle,2024,12,150,5 ROOM`;
             }
         }
 
-        async function loadAnalytics(selectedCountries = null) {
+        async function loadAnalytics(filters = null) {
             try {
                 // Show loading indicator
                 document.getElementById('analyticsLoading').style.display = 'block';
                 document.getElementById('analyticsContent').style.display = 'none';
                 
-                // Build query string for country filter
+                // Build query string with all filters
                 let url = '/analytics';
-                if (selectedCountries && selectedCountries.length > 0) {
-                    const params = selectedCountries.map(c => `countries=${encodeURIComponent(c)}`).join('&');
-                    url += '?' + params;
+                const params = [];
+                
+                // Handle legacy format (array of countries) or new format (filters object)
+                if (filters) {
+                    if (Array.isArray(filters)) {
+                        // Legacy: selectedCountries array
+                        filters.forEach(c => params.push(`countries=${encodeURIComponent(c)}`));
+                    } else {
+                        // New: filters object
+                        if (filters.countries && filters.countries.length > 0) {
+                            filters.countries.forEach(c => params.push(`countries=${encodeURIComponent(c)}`));
+                        }
+                        if (filters.year_from) params.push(`year_from=${filters.year_from}`);
+                        if (filters.year_to) params.push(`year_to=${filters.year_to}`);
+                        if (filters.property_types && filters.property_types.length > 0) {
+                            filters.property_types.forEach(pt => params.push(`property_types=${encodeURIComponent(pt)}`));
+                        }
+                        if (filters.price_min) params.push(`price_min=${filters.price_min}`);
+                        if (filters.price_max) params.push(`price_max=${filters.price_max}`);
+                    }
+                }
+                
+                if (params.length > 0) {
+                    url += '?' + params.join('&');
                 }
                 
                 const response = await fetch(url);
@@ -1471,6 +1676,11 @@ United States,Seattle,2024,12,150,5 ROOM`;
                 createPropertyTypeChart(data.property_types);
                 createPriceDistChart(data.price_distribution);
                 createAreaPriceChart(data.area_price_scatter);
+                
+                // Create new charts
+                createMonthlyTrendChart(data.monthly_trends);
+                createCityHeatmapChart(data.city_heatmap);
+                createCumulativeGrowthChart(data.cumulative_growth);
                 
                 chartsInitialized = true;
                 
@@ -1590,30 +1800,50 @@ United States,Seattle,2024,12,150,5 ROOM`;
         function displayStatistics(stats) {
             const statsGrid = document.getElementById('statsGrid');
             statsGrid.innerHTML = `
-                <div class="stat-card">
+                <div class="stat-card" style="animation: fadeInUp 0.5s ease-out;">
                     <div class="stat-value"><i class="fas fa-database"></i> ${stats.total_records.toLocaleString()}</div>
                     <div class="stat-label">Total Records</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value"><i class="fas fa-dollar-sign"></i> ${(stats.avg_price / 1000).toFixed(0)}K</div>
+                <div class="stat-card" style="animation: fadeInUp 0.5s ease-out 0.1s; animation-fill-mode: both;">
+                    <div class="stat-value"><i class="fas fa-dollar-sign"></i> $${(stats.avg_price / 1000).toFixed(0)}K</div>
                     <div class="stat-label">Average Price</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value"><i class="fas fa-chart-line"></i> ${(stats.median_price / 1000).toFixed(0)}K</div>
+                <div class="stat-card" style="animation: fadeInUp 0.5s ease-out 0.2s; animation-fill-mode: both;">
+                    <div class="stat-value"><i class="fas fa-chart-line"></i> $${(stats.median_price / 1000).toFixed(0)}K</div>
                     <div class="stat-label">Median Price</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" style="animation: fadeInUp 0.5s ease-out 0.3s; animation-fill-mode: both;">
+                    <div class="stat-value"><i class="fas fa-arrow-up"></i> $${(stats.max_price / 1000).toFixed(0)}K</div>
+                    <div class="stat-label">Maximum Price</div>
+                </div>
+                <div class="stat-card" style="animation: fadeInUp 0.5s ease-out 0.4s; animation-fill-mode: both;">
+                    <div class="stat-value"><i class="fas fa-arrow-down"></i> $${(stats.min_price / 1000).toFixed(0)}K</div>
+                    <div class="stat-label">Minimum Price</div>
+                </div>
+                <div class="stat-card" style="animation: fadeInUp 0.5s ease-out 0.5s; animation-fill-mode: both;">
                     <div class="stat-value"><i class="fas fa-city"></i> ${stats.total_cities}</div>
                     <div class="stat-label">Cities</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" style="animation: fadeInUp 0.5s ease-out 0.6s; animation-fill-mode: both;">
                     <div class="stat-value"><i class="fas fa-globe"></i> ${stats.total_countries}</div>
                     <div class="stat-label">Countries</div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card" style="animation: fadeInUp 0.5s ease-out 0.7s; animation-fill-mode: both;">
                     <div class="stat-value"><i class="fas fa-calendar"></i> ${stats.year_range}</div>
                     <div class="stat-label">Year Range</div>
                 </div>
+                ${stats.avg_area ? `
+                <div class="stat-card" style="animation: fadeInUp 0.5s ease-out 0.8s; animation-fill-mode: both;">
+                    <div class="stat-value"><i class="fas fa-ruler-combined"></i> ${stats.avg_area.toFixed(0)} m²</div>
+                    <div class="stat-label">Average Area</div>
+                </div>
+                ` : ''}
+                ${stats.property_type_count ? `
+                <div class="stat-card" style="animation: fadeInUp 0.5s ease-out 0.9s; animation-fill-mode: both;">
+                    <div class="stat-value"><i class="fas fa-home"></i> ${stats.property_type_count}</div>
+                    <div class="stat-label">Property Types</div>
+                </div>
+                ` : ''}
             `;
         }
 
@@ -1853,7 +2083,15 @@ United States,Seattle,2024,12,150,5 ROOM`;
                 options: {
                     responsive: true,
                     plugins: { 
-                        legend: { display: false }
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            callbacks: {
+                                label: function(context) {
+                                    return `Area: ${context.parsed.x.toFixed(1)} m² | Price: $${context.parsed.y.toLocaleString()}`;
+                                }
+                            }
+                        }
                     },
                     scales: {
                         x: { 
@@ -1869,6 +2107,276 @@ United States,Seattle,2024,12,150,5 ROOM`;
                             },
                             grid: { color: colors.grid }
                         }
+                    }
+                }
+            });
+        }
+        
+        // New Analytics Charts
+        function createMonthlyTrendChart(data) {
+            if (!data || !data.labels || data.labels.length === 0) {
+                console.log('No monthly trend data available');
+                return;
+            }
+            
+            const colors = getChartColors();
+            const ctx = document.getElementById('monthlyTrendChart').getContext('2d');
+            
+            chartInstances.monthlyTrend = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Monthly Average Price',
+                        data: data.values,
+                        borderColor: colors.accent,
+                        backgroundColor: colors.accentAlpha,
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 3,
+                        pointRadius: 3,
+                        pointHoverRadius: 6,
+                        pointBackgroundColor: colors.accent,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: colors.accent,
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Average Price: $' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            ticks: { 
+                                color: colors.text,
+                                maxRotation: 45,
+                                minRotation: 45
+                            },
+                            grid: { display: false }
+                        },
+                        y: {
+                            beginAtZero: false,
+                            ticks: { 
+                                color: colors.text,
+                                callback: value => '$' + (value / 1000).toFixed(0) + 'K' 
+                            },
+                            grid: { color: colors.grid }
+                        }
+                    },
+                    animation: {
+                        duration: 1500,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+        }
+        
+        function createCityHeatmapChart(data) {
+            if (!data || !data.labels || data.labels.length === 0) {
+                console.log('No city heatmap data available');
+                return;
+            }
+            
+            const colors = getChartColors();
+            const ctx = document.getElementById('cityHeatmapChart').getContext('2d');
+            
+            // Generate gradient colors based on price values
+            const maxPrice = Math.max(...data.values);
+            const minPrice = Math.min(...data.values);
+            const chartColors = data.values.map(price => {
+                const intensity = (price - minPrice) / (maxPrice - minPrice);
+                const r = Math.floor(255 * intensity);
+                const g = Math.floor(100 * (1 - intensity));
+                const b = Math.floor(200 * (1 - intensity));
+                return `rgba(${r}, ${g}, ${b}, 0.8)`;
+            });
+            
+            chartInstances.cityHeatmap = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Average Price',
+                        data: data.values,
+                        backgroundColor: chartColors,
+                        borderRadius: 8,
+                        borderWidth: 2,
+                        borderColor: chartColors.map(c => c.replace('0.8', '1'))
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            callbacks: {
+                                label: function(context) {
+                                    const idx = context.dataIndex;
+                                    return [
+                                        `Average Price: $${context.parsed.x.toLocaleString()}`,
+                                        `Records: ${data.counts[idx].toLocaleString()}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: { 
+                                color: colors.text,
+                                callback: value => '$' + (value / 1000).toFixed(0) + 'K' 
+                            },
+                            grid: { color: colors.grid }
+                        },
+                        y: { 
+                            ticks: { 
+                                color: colors.text,
+                                font: { size: 11 }
+                            },
+                            grid: { display: false }
+                        }
+                    },
+                    animation: {
+                        duration: 1500,
+                        easing: 'easeInOutQuart'
+                    }
+                }
+            });
+        }
+        
+        function createCumulativeGrowthChart(data) {
+            if (!data || !data.labels || data.labels.length === 0) {
+                console.log('No cumulative growth data available');
+                return;
+            }
+            
+            const colors = getChartColors();
+            const ctx = document.getElementById('cumulativeGrowthChart').getContext('2d');
+            
+            chartInstances.cumulativeGrowth = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Average Price',
+                        data: data.mean,
+                        borderColor: colors.primary,
+                        backgroundColor: colors.primaryAlpha,
+                        yAxisID: 'y',
+                        tension: 0.4,
+                        fill: true,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointHoverRadius: 7
+                    }, {
+                        label: 'Year-over-Year Growth (%)',
+                        data: data.growth,
+                        borderColor: colors.tertiary,
+                        backgroundColor: 'transparent',
+                        yAxisID: 'y1',
+                        tension: 0.4,
+                        borderWidth: 2,
+                        borderDash: [5, 5],
+                        pointRadius: 4,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: { 
+                        legend: { 
+                            display: true,
+                            position: 'top',
+                            labels: { 
+                                color: colors.text,
+                                font: { size: 11, weight: 600 },
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: colors.primary,
+                            borderWidth: 1,
+                            padding: 12,
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label;
+                                    const value = context.parsed.y;
+                                    if (label.includes('Growth')) {
+                                        return `${label}: ${value ? value.toFixed(2) : 'N/A'}%`;
+                                    } else {
+                                        return `${label}: $${value.toLocaleString()}`;
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { 
+                            ticks: { color: colors.text },
+                            grid: { display: false }
+                        },
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: { 
+                                display: true, 
+                                text: 'Average Price ($)', 
+                                color: colors.text 
+                            },
+                            ticks: { 
+                                color: colors.text,
+                                callback: value => '$' + (value / 1000).toFixed(0) + 'K' 
+                            },
+                            grid: { color: colors.grid }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: { 
+                                display: true, 
+                                text: 'Growth (%)', 
+                                color: colors.text 
+                            },
+                            ticks: { 
+                                color: colors.text,
+                                callback: value => value.toFixed(1) + '%'
+                            },
+                            grid: { drawOnChartArea: false }
+                        }
+                    },
+                    animation: {
+                        duration: 2000,
+                        easing: 'easeInOutQuart'
                     }
                 }
             });

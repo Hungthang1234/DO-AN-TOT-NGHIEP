@@ -1,0 +1,488 @@
+================================================================================
+        HƯỚNG DẪN SỬ DỤNG ỨNG DỤNG DỰ ĐOÁN GIÁ BẤT ĐỘNG SẢN
+================================================================================
+
+Phiên bản: 2.0
+Ngày cập nhật: 19/11/2025
+Mô hình: LightGBM (RMSE: 46,958.14, R²: 0.9319)
+
+================================================================================
+                            MỤC LỤC
+================================================================================
+
+1. GIỚI THIỆU
+2. YÊU CẦU HỆ THỐNG
+3. CÀI ĐẶT VÀ KHỞI ĐỘNG
+4. HƯỚNG DẪN SỬ DỤNG CHI TIẾT
+   4.1. Dự đoán đơn lẻ (Single Prediction)
+   4.2. Dự đoán hàng loạt (Batch Prediction)
+   4.3. Phân tích dữ liệu (Data Analytics & Insights)
+   4.4. Trực quan hóa nâng cao (Advanced Visualization)
+5. CÁC LƯU Ý QUAN TRỌNG
+6. XỬ LÝ Sự CỐ
+7. HỖ TRỢ
+
+================================================================================
+                        1. GIỚI THIỆU
+================================================================================
+
+Ứng dụng Dự đoán Giá Bất động sản sử dụng Machine Learning (LightGBM) để 
+dự đoán giá nhà dựa trên các đặc điểm như:
+- Quốc gia (Singapore, Australia, USA)
+- Thành phố (347 thành phố)
+- Năm và tháng
+- Diện tích (m²)
+- Loại bất động sản (2 ROOM, 3 ROOM, 4 ROOM, 5 ROOM, EXECUTIVE, MULTI-GENERATION)
+
+Độ chính xác: R² = 0.9319 (93.19% độ chính xác)
+
+================================================================================
+                        2. YÊU CẦU HỆ THỐNG
+================================================================================
+
+Phần mềm cần thiết:
+- Python 3.10 trở lên
+- Flask 3.1.2
+- scikit-learn 1.7.2
+- LightGBM 4.6.0
+- pandas 2.3.3
+- numpy 2.3.4
+
+Trình duyệt web được hỗ trợ:
+- Google Chrome (khuyến nghị)
+- Microsoft Edge
+- Firefox
+- Safari
+
+Kết nối mạng:
+- Cần kết nối internet để tải thư viện Chart.js và Font Awesome
+
+================================================================================
+                    3. CÀI ĐẶT VÀ KHỞI ĐỘNG
+================================================================================
+
+BƯỚC 1: Khởi động ứng dụng
+---------------------------
+Mở PowerShell hoặc Command Prompt tại thư mục dự án và chạy:
+
+    cd "D:\Do An Tot Nghiep - Du doan gia bat dong san bang ML va DL"
+    .venv\Scripts\python.exe app.py
+
+BƯỚC 2: Truy cập ứng dụng
+--------------------------
+Mở trình duyệt web và truy cập:
+
+    http://localhost:5000
+
+hoặc
+
+    http://127.0.0.1:5000
+
+BƯỚC 3: Kiểm tra kết nối
+-------------------------
+Nếu thấy giao diện trang chủ với 4 tab (Single Prediction, Batch Prediction,
+Data Analytics & Insights, Advanced Visualization) nghĩa là đã kết nối thành công.
+
+================================================================================
+                    4. HƯỚNG DẪN SỬ DỤNG CHI TIẾT
+================================================================================
+
+--------------------------------------------------------------------------------
+4.1. DỰ ĐOÁN ĐƠN LẺ (SINGLE PREDICTION)
+--------------------------------------------------------------------------------
+
+Dùng để dự đoán giá cho MỘT bất động sản.
+
+CÁCH SỬ DỤNG:
+
+1. Chọn tab "Single Prediction" (tab đầu tiên)
+
+2. Điền thông tin:
+   - Country (Quốc gia): Chọn Singapore, Australia, hoặc USA
+   - City (Thành phố): Chọn thành phố (danh sách tự động tải sau khi chọn quốc gia)
+   - Year (Năm): Nhập năm (1990-2025)
+     * LƯU Ý: Năm > 2025 sẽ cho kết quả ngoại suy, độ tin cậy thấp hơn
+   - Month (Tháng): Nhập tháng (1-12)
+   - Area (Diện tích): Nhập diện tích tính bằng m² (ví dụ: 100)
+   - Property Type (Loại bất động sản): Chọn từ danh sách
+     * 2 ROOM: Căn hộ 2 phòng
+     * 3 ROOM: Căn hộ 3 phòng
+     * 4 ROOM: Căn hộ 4 phòng
+     * 5 ROOM: Căn hộ 5 phòng
+     * EXECUTIVE: Căn hộ cao cấp
+     * MULTI-GENERATION: Căn hộ đa thế hệ
+
+3. Nhấn nút "Predict Price" (màu xanh dương)
+
+4. Xem kết quả:
+   - Giá dự đoán hiển thị trong hộp kết quả màu xanh lá
+   - Định dạng: $XXX,XXX.XX
+   - Nếu năm > 2025, sẽ có cảnh báo màu vàng về ngoại suy
+
+VÍ DỤ:
+- Country: Singapore
+- City: BUKIT BATOK
+- Year: 2023
+- Month: 6
+- Area: 85 m²
+- Property Type: 3 ROOM
+→ Kết quả: ~$450,000
+
+--------------------------------------------------------------------------------
+4.2. DỰ ĐOÁN HÀNG LOẠT (BATCH PREDICTION)
+--------------------------------------------------------------------------------
+
+Dùng để dự đoán giá cho NHIỀU bất động sản cùng lúc từ file CSV.
+
+CÁCH SỬ DỤNG:
+
+1. Chọn tab "Batch Prediction" (tab thứ hai)
+
+2. Tải file mẫu (nếu chưa có):
+   - Nhấn nút "Download CSV Template" (màu xanh lá)
+   - File mẫu có 4 dòng dữ liệu mẫu
+   - Cột yêu cầu: country, city, year, month, area_m2, property_type
+
+3. Chuẩn bị file CSV:
+   - Mở file mẫu bằng Excel hoặc notepad
+   - Nhập dữ liệu của bạn theo định dạng:
+     
+     country,city,year,month,area_m2,property_type
+     Singapore,BUKIT BATOK,2023,6,85,3 ROOM
+     USA,Seattle,2023,7,120,4 ROOM
+     Australia,Melbourne,2023,8,95,2 ROOM
+
+   - Lưu file với tên bất kỳ (ví dụ: my_data.csv)
+
+4. Upload file:
+   - Nhấn nút "Choose File"
+   - Chọn file CSV của bạn
+   - Nhấn "Open"
+
+5. Xem kết quả:
+   - Bảng kết quả hiển thị tối đa 50 dòng đầu tiên
+   - Các cột: Row (số thứ tự), Predicted Price (giá dự đoán)
+   - Thống kê tổng hợp:
+     * Total Predictions: Tổng số dự đoán
+     * Average Price: Giá trung bình
+     * Min Price: Giá thấp nhất
+     * Max Price: Giá cao nhất
+     * Std Deviation: Độ lệch chuẩn
+
+6. Xuất kết quả:
+   - Nhấn "Export to CSV" để tải toàn bộ kết quả (bao gồm cả > 50 dòng)
+   - File tải về: batch_predictions_YYYY-MM-DD.csv
+
+7. Xem biểu đồ:
+   - Biểu đồ phân phối giá tự động hiển thị
+   - Cho thấy phân bố giá dự đoán trong 10 khoảng
+
+8. Xóa kết quả:
+   - Nhấn "Clear Results" để xóa và thử lại với file khác
+
+LƯU Ý:
+- File CSV phải có header (dòng tiêu đề)
+- Encoding: UTF-8
+- Dung lượng tối đa: Không giới hạn (khuyến nghị < 10,000 dòng)
+
+--------------------------------------------------------------------------------
+4.3. PHÂN TÍCH DỮ LIỆU (DATA ANALYTICS & INSIGHTS)
+--------------------------------------------------------------------------------
+
+Cung cấp phân tích chi tiết về xu hướng giá bất động sản.
+
+CÁCH SỬ DỤNG:
+
+1. Chọn tab "Data Analytics & Insights" (tab thứ ba)
+
+2. Chờ dữ liệu tải (có loading indicator):
+   - Hệ thống tải 10,000 bản ghi mẫu
+   - Thời gian tải: 2-5 giây
+
+3. Lọc theo quốc gia:
+   - Mặc định: Tất cả 3 quốc gia được chọn
+   - Bỏ chọn quốc gia không muốn phân tích
+   - Nhấn "Apply Filter" để cập nhật biểu đồ
+
+4. Xem thống kê tổng quan (8 chỉ số):
+   - Total Records: Tổng số bản ghi
+   - Average Price: Giá trung bình
+   - Median Price: Giá trung vị
+   - Cities: Số lượng thành phố
+   - Countries: Số lượng quốc gia
+   - Min Price: Giá thấp nhất
+   - Max Price: Giá cao nhất
+   - Year Range: Khoảng năm dữ liệu
+
+5. Xem 6 biểu đồ phân tích:
+
+   a) Price Trend by Year:
+      - Đường xu hướng giá theo năm
+      - 2 đường: Average Price (xanh) và Median Price (xanh lơ)
+      - Hover chuột để xem chi tiết từng năm
+
+   b) Average Price by Country:
+      - Cột so sánh giá trung bình giữa các quốc gia
+      - Màu khác nhau cho mỗi quốc gia
+
+   c) Top 10 Most Expensive Cities:
+      - Cột ngang (horizontal bar)
+      - 10 thành phố có giá cao nhất
+      - Xếp từ cao đến thấp
+
+   d) Property Type Distribution:
+      - Biểu đồ tròn (doughnut)
+      - Tỷ lệ phần trăm mỗi loại bất động sản
+      - Legend bên phải
+
+   e) Price Distribution:
+      - Histogram 20 bins
+      - Cho thấy phân bố tần suất giá
+      - Trục Y: số lượng bất động sản
+
+   f) Area vs Price Correlation:
+      - Scatter plot (biểu đồ phân tán)
+      - 1,000 điểm mẫu
+      - Trục X: Diện tích (m²)
+      - Trục Y: Giá ($)
+
+6. Xuất dữ liệu phân tích:
+   - Nhấn "Export Data (CSV)" (nút màu xanh lá)
+   - File bao gồm:
+     * Dữ liệu từ 6 biểu đồ
+     * Thống kê tổng hợp
+   - Tên file: analytics_export_YYYY-MM-DD.csv
+
+7. Chuyển đổi chế độ sáng/tối:
+   - Nhấn biểu tượng mặt trời/mặt trăng góc trên phải
+   - Tất cả biểu đồ tự động cập nhật màu sắc
+
+XỬ LÝ LỖI:
+- Nếu không tải được: Nhấn nút "Retry" trong thông báo lỗi màu đỏ
+- Nếu filter không hoạt động: Chọn lại ít nhất 1 quốc gia
+
+--------------------------------------------------------------------------------
+4.4. TRỰC QUAN HÓA NÂNG CAO (ADVANCED VISUALIZATION)
+--------------------------------------------------------------------------------
+
+Cung cấp 8 biểu đồ phân tích nâng cao và tương tác.
+
+CÁCH SỬ DỤNG:
+
+1. Chọn tab "Advanced Visualization" (tab thứ tư)
+
+2. Chọn bộ lọc:
+   - Year Range: Chọn khoảng năm
+     * Last 5 Years: 5 năm gần nhất
+     * Last 10 Years: 10 năm gần nhất
+     * All Time: Toàn bộ dữ liệu
+   
+   - Country: Chọn quốc gia cụ thể hoặc "All Countries"
+
+3. Nhấn "Load Visualization" để tải dữ liệu
+
+4. Xem 8 biểu đồ nâng cao:
+
+   a) Monthly Price Trends:
+      - Xu hướng giá theo tháng
+      - Đường thời gian chi tiết
+
+   b) Property Type Price Comparison:
+      - So sánh giá giữa các loại bất động sản
+      - Bar chart với màu sắc phân biệt
+
+   c) Price Range Distribution:
+      - Phân bố theo khoảng giá
+      - 5 nhóm: Under 200K, 200K-400K, 400K-600K, 600K-800K, Above 800K
+
+   d) Area Distribution by Property Type:
+      - Phân bố diện tích theo loại bất động sản
+      - Stacked bar chart
+
+   e) Seasonal Price Patterns:
+      - Biểu đồ radar (lục giác)
+      - So sánh giá theo mùa/quý
+
+   f) Top 10 Cities Price Comparison:
+      - So sánh chi tiết 10 thành phố
+      - Nhiều thông tin hơn tab Analytics
+
+   g) Average Price by Property Type:
+      - Biểu đồ cột giá trung bình
+      - Sắp xếp từ cao đến thấp
+
+   h) Interactive Charts:
+      - Các biểu đồ có thể zoom, pan
+      - Click vào legend để ẩn/hiện dataset
+
+5. Xem thống kê tổng quan:
+   - 4 cards thông tin ở đầu trang
+   - Tự động cập nhật theo filter
+
+TÍNH NĂNG TƯƠNG TÁC:
+- Hover: Xem tooltip chi tiết
+- Click legend: Ẩn/hiện dataset
+- Theme toggle: Chuyển đổi sáng/tối
+
+================================================================================
+                        5. CÁC LƯU Ý QUAN TRỌNG
+================================================================================
+
+GIỚI HẠN DỮ LIỆU:
+- Dữ liệu huấn luyện: 1990-2025
+- Dự đoán cho năm > 2025 là NGOẠI SUY (độ tin cậy giảm)
+- Quốc gia: Chỉ hỗ trợ Singapore, Australia, USA
+- Thành phố: 347 thành phố trong dữ liệu
+
+ĐỘ CHÍNH XÁC:
+- R² Score: 0.9319 (93.19%)
+- RMSE: $46,958.14
+- Mô hình: LightGBM với 7 features
+- Dự đoán TỐT NHẤT cho:
+  * Năm 2020-2025
+  * Diện tích 50-200 m²
+  * Các thành phố phổ biến
+
+CẢI THIỆN KẾT QUẢ:
+- Nhập đầy đủ thông tin (không bỏ trống)
+- Chọn năm trong khoảng 1990-2025
+- Sử dụng thành phố có trong danh sách
+- Diện tích hợp lý (không quá nhỏ hoặc quá lớn)
+
+BẢO MẬT:
+- Dữ liệu upload không được lưu trữ
+- Chỉ xử lý tạm thời trong RAM
+- Không chia sẻ dữ liệu với bên thứ ba
+
+HIỆU SUẤT:
+- Single Prediction: < 1 giây
+- Batch Prediction: 
+  * 100 dòng: ~2 giây
+  * 1,000 dòng: ~5 giây
+  * 10,000 dòng: ~30 giây
+- Analytics: 3-5 giây (load 10,000 records)
+- Visualization: 3-5 giây
+
+================================================================================
+                        6. XỬ LÝ SỰ CỐ
+================================================================================
+
+SỰ CỐ: Server không khởi động
+NGUYÊN NHÂN: Port 5000 đã được sử dụng
+GIẢI PHÁP:
+1. Đóng ứng dụng đang dùng port 5000
+2. Hoặc đổi port trong file app.py:
+   app.run(host='0.0.0.0', port=5001, debug=False)
+
+--------------------------------------------------------------------------------
+
+SỰ CỐ: Không tải được thành phố
+NGUYÊN NHÂN: Chưa chọn quốc gia hoặc lỗi kết nối
+GIẢI PHÁP:
+1. Kiểm tra đã chọn quốc gia chưa
+2. F5 (refresh) trang web
+3. Kiểm tra console log (F12)
+
+--------------------------------------------------------------------------------
+
+SỰ CỐ: Upload CSV thất bại
+NGUYÊN NHÂN: 
+- File không đúng định dạng
+- Thiếu cột bắt buộc
+- Encoding không phải UTF-8
+GIẢI PHÁP:
+1. Tải template mẫu
+2. Kiểm tra có đủ 6 cột: country, city, year, month, area_m2, property_type
+3. Lưu file với encoding UTF-8
+4. Xóa ký tự đặc biệt trong dữ liệu
+
+--------------------------------------------------------------------------------
+
+SỰ CỐ: Biểu đồ không hiển thị
+NGUYÊN NHÂN: Lỗi JavaScript hoặc không có dữ liệu
+GIẢI PHÁP:
+1. Kiểm tra kết nối internet (Chart.js cần tải từ CDN)
+2. F5 (refresh) trang
+3. Thử trình duyệt khác
+4. Xóa cache trình duyệt (Ctrl+Shift+Del)
+
+--------------------------------------------------------------------------------
+
+SỰ CỐ: Kết quả dự đoán không hợp lý (quá cao/thấp)
+NGUYÊN NHÂN: Dữ liệu đầu vào nằm ngoài phạm vi huấn luyện
+GIẢI PHÁP:
+1. Kiểm tra lại các giá trị đầu vào
+2. Đảm bảo năm trong khoảng 1990-2025
+3. Diện tích hợp lý (50-500 m²)
+4. Thành phố có trong danh sách hỗ trợ
+
+--------------------------------------------------------------------------------
+
+SỰ CỐ: Cảnh báo LGBMRegressor feature names
+NGUYÊN NHÂN: (Đã được fix trong phiên bản 2.0)
+GIẢI PHÁP: Không cần xử lý, chỉ là warning không ảnh hưởng kết quả
+
+--------------------------------------------------------------------------------
+
+SỰ CỐ: Export CSV không tải xuống
+NGUYÊN NHÂN: Trình duyệt chặn download
+GIẢI PHÁP:
+1. Cho phép download trong cài đặt trình duyệt
+2. Kiểm tra thư mục Downloads
+3. Thử trình duyệt khác
+
+================================================================================
+                            7. HỖ TRỢ
+================================================================================
+
+THÔNG TIN DỰ ÁN:
+- Tên: Dự án Tốt nghiệp - Dự đoán Giá Bất động sản
+- Mô hình: LightGBM
+- Framework: Flask + scikit-learn
+- Frontend: HTML5, CSS3, JavaScript (Chart.js)
+
+GITHUB REPOSITORY:
+https://github.com/Hungthang1234/DO-AN-TOT-NGHIEP
+
+FILE QUAN TRỌNG:
+- app.py: Server Flask
+- templates/index.html: Giao diện web
+- models/best.joblib: Mô hình LightGBM đã train
+- Data/cleaned_real_estate.csv: Dữ liệu huấn luyện
+- TrainModel.ipynb: Notebook huấn luyện mô hình
+- ANALYTICS_FIXES.md: Lịch sử sửa lỗi và cải tiến
+
+CHANGELOG (PHIÊN BẢN 2.0 - 19/11/2025):
+✓ Sửa LGBMRegressor feature names warning
+✓ Sửa NAType errors trong batch prediction
+✓ Thêm loading indicators cho Analytics
+✓ Thêm error handling nâng cao
+✓ Thêm CSV export cho Analytics
+✓ Cải thiện tooltips trên biểu đồ
+✓ Sửa country checkbox handler
+✓ Thêm theme colors cho error states
+
+TÍNH NĂNG TƯƠNG LAI (ROADMAP):
+□ Thêm mô hình Deep Learning (LSTM)
+□ Hỗ trợ thêm quốc gia (UK, Canada, Japan)
+□ Real-time price updates
+□ Mobile app (iOS/Android)
+□ API cho developer
+□ Xuất báo cáo PDF
+□ Tích hợp bản đồ tương tác
+□ Dự đoán xu hướng giá tương lai
+
+================================================================================
+                        KẾT THÚC HƯỚNG DẪN
+================================================================================
+
+Cảm ơn bạn đã sử dụng ứng dụng Dự đoán Giá Bất động sản!
+
+Nếu có thắc mắc hoặc gặp vấn đề, vui lòng:
+1. Đọc kỹ phần "Xử lý sự cố" ở trên
+2. Kiểm tra file ANALYTICS_FIXES.md để biết thêm chi tiết kỹ thuật
+3. Mở issue trên GitHub repository
+
+Chúc bạn sử dụng ứng dụng hiệu quả!
+
+© 2025 - House Price Prediction ML/DL Project

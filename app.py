@@ -306,10 +306,15 @@ def reload_model():
 
 @app.route('/analytics', methods=['GET'])
 def analytics():
-    """Get analytics data for visualization"""
+    """Get analytics data for visualization with advanced filters"""
     try:
-        # Get country filter from query parameter
+        # Get filters from query parameters
         selected_countries = request.args.getlist('countries')
+        year_from = request.args.get('year_from', type=int)
+        year_to = request.args.get('year_to', type=int)
+        selected_property_types = request.args.getlist('property_types')
+        price_min = request.args.get('price_min', type=float)
+        price_max = request.args.get('price_max', type=float)
         
         # Load sample data for analysis
         data_path = Path('Data/cleaned_real_estate.csv')
@@ -319,12 +324,27 @@ def analytics():
                 'error': 'Data file not found. Please ensure cleaned_real_estate.csv exists in Data folder.'
             }), 404
         
-        # Load sample of data (limit to 10000 rows for performance)
-        df = pd.read_csv(data_path, nrows=10000)
+        # Load sample of data (limit to 15000 rows for better analysis)
+        df = pd.read_csv(data_path, nrows=15000)
         
-        # Filter by selected countries if provided
+        # Apply filters
         if selected_countries and len(selected_countries) > 0:
             df = df[df['country'].isin(selected_countries)]
+        
+        if year_from is not None:
+            df = df[df['year'] >= year_from]
+        
+        if year_to is not None:
+            df = df[df['year'] <= year_to]
+        
+        if selected_property_types and len(selected_property_types) > 0:
+            df = df[df['property_type'].isin(selected_property_types)]
+        
+        if price_min is not None:
+            df = df[df['price'] >= price_min]
+        
+        if price_max is not None:
+            df = df[df['price'] <= price_max]
         
         # Price distribution by year
         price_by_year = df.groupby('year')['price'].agg(['mean', 'median', 'count']).reset_index()
@@ -349,6 +369,52 @@ def analytics():
         
         # Area vs Price correlation
         area_price = df[['area_m2', 'price']].dropna().sample(min(1000, len(df)))
+        
+        # Monthly trends (group by year-month)
+        try:
+            if 'month' in df.columns:
+                df_monthly = df[df['month'].notna() & df['year'].notna()].copy()
+                if len(df_monthly) > 0:
+                    df_monthly['year_month'] = df_monthly['year'].astype(int).astype(str) + '-' + df_monthly['month'].astype(int).astype(str).str.zfill(2)
+                    monthly_trends = df_monthly.groupby('year_month')['price'].mean().tail(24).reset_index()
+                    monthly_trends = monthly_trends.sort_values('year_month')
+                else:
+                    monthly_trends = pd.DataFrame({'year_month': [], 'price': []})
+            else:
+                monthly_trends = pd.DataFrame({'year_month': [], 'price': []})
+        except Exception as e:
+            print(f"Warning: Error processing monthly trends: {e}")
+            monthly_trends = pd.DataFrame({'year_month': [], 'price': []})
+        
+        # City heatmap (top 15 cities with price levels)
+        city_heatmap = df.groupby('city')['price'].agg(['mean', 'count']).reset_index()
+        city_heatmap = city_heatmap[city_heatmap['count'] >= 5].nlargest(15, 'mean')
+        
+        # Cumulative growth (year-over-year)
+        try:
+            if len(price_by_year) > 1:
+                growth_data = price_by_year.copy()
+                growth_data['growth'] = growth_data['mean'].pct_change() * 100
+                growth_data['cumulative'] = (1 + growth_data['mean'].pct_change()).cumprod() * 100
+                # Replace NaN with 0 for first row
+                growth_data['growth'] = growth_data['growth'].fillna(0)
+                growth_data['cumulative'] = growth_data['cumulative'].fillna(100)
+            else:
+                growth_data = pd.DataFrame({'year': [], 'mean': [], 'growth': [], 'cumulative': []})
+        except Exception as e:
+            print(f"Warning: Error processing cumulative growth: {e}")
+            growth_data = pd.DataFrame({'year': [], 'mean': [], 'growth': [], 'cumulative': []})
+        
+        # Additional statistics
+        try:
+            avg_area = float(df['area_m2'].mean()) if 'area_m2' in df.columns and df['area_m2'].notna().any() else 0
+            price_std = float(df['price'].std()) if df['price'].notna().any() else 0
+            property_type_count = int(df['property_type'].nunique()) if 'property_type' in df.columns else 0
+        except Exception as e:
+            print(f"Warning: Error calculating additional statistics: {e}")
+            avg_area = 0
+            price_std = 0
+            property_type_count = 0
         
         analytics_data = {
             'success': True,
@@ -380,15 +446,33 @@ def analytics():
                     'area': area_price['area_m2'].tolist(),
                     'price': area_price['price'].tolist()
                 },
+                'monthly_trends': {
+                    'labels': monthly_trends['year_month'].tolist() if len(monthly_trends) > 0 else [],
+                    'values': monthly_trends['price'].round(2).tolist() if len(monthly_trends) > 0 else []
+                },
+                'city_heatmap': {
+                    'labels': city_heatmap['city'].tolist() if len(city_heatmap) > 0 else [],
+                    'values': city_heatmap['mean'].round(2).tolist() if len(city_heatmap) > 0 else [],
+                    'counts': city_heatmap['count'].tolist() if len(city_heatmap) > 0 else []
+                },
+                'cumulative_growth': {
+                    'labels': [int(x) for x in growth_data['year'].tolist()] if len(growth_data) > 0 else [],
+                    'mean': [float(x) for x in growth_data['mean'].round(2).tolist()] if len(growth_data) > 0 else [],
+                    'growth': [float(x) for x in growth_data['growth'].round(2).tolist()] if len(growth_data) > 0 else [],
+                    'cumulative': [float(x) for x in growth_data['cumulative'].round(2).tolist()] if len(growth_data) > 0 else []
+                },
                 'statistics': {
-                    'total_records': len(df),
-                    'avg_price': float(df['price'].mean()),
-                    'median_price': float(df['price'].median()),
-                    'min_price': float(df['price'].min()),
-                    'max_price': float(df['price'].max()),
-                    'total_cities': int(df['city'].nunique()),
-                    'total_countries': int(df['country'].nunique()),
-                    'year_range': f"{df['year'].min()} - {df['year'].max()}"
+                    'total_records': int(len(df)),
+                    'avg_price': float(df['price'].mean()) if len(df) > 0 else 0.0,
+                    'median_price': float(df['price'].median()) if len(df) > 0 else 0.0,
+                    'min_price': float(df['price'].min()) if len(df) > 0 else 0.0,
+                    'max_price': float(df['price'].max()) if len(df) > 0 else 0.0,
+                    'total_cities': int(df['city'].nunique()) if len(df) > 0 else 0,
+                    'total_countries': int(df['country'].nunique()) if len(df) > 0 else 0,
+                    'year_range': f"{int(df['year'].min())} - {int(df['year'].max())}" if len(df) > 0 and df['year'].notna().any() else "N/A",
+                    'avg_area': float(avg_area),
+                    'price_std': float(price_std),
+                    'property_type_count': int(property_type_count)
                 }
             }
         }
@@ -396,6 +480,8 @@ def analytics():
         return jsonify(analytics_data)
         
     except Exception as e:
+        print(f"ERROR in analytics endpoint: {str(e)}")
+        traceback.print_exc()
         return jsonify({
             'success': False,
             'error': f'Error loading analytics: {str(e)}',
