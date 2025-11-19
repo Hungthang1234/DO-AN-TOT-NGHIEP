@@ -122,8 +122,8 @@ def predict():
                 'success': False
             })
         
-        # Get form data
-        form_data = request.form.to_dict()
+        # Get data from JSON body (not form data)
+        form_data = request.get_json() or {}
         
         # Get model pipeline and feature names
         if isinstance(model_data, dict):
@@ -137,37 +137,49 @@ def predict():
         input_data = {}
         for key, value in form_data.items():
             # Skip empty values
-            if not value or value.strip() == '':
+            if not value or str(value).strip() == '':
                 continue
             # Try to convert to numeric if possible
             try:
                 input_data[key] = float(value)
-            except ValueError:
+            except (ValueError, TypeError):
                 input_data[key] = value
         
         # Create DataFrame with single row
         df = pd.DataFrame([input_data])
         
+        # Create date column from year and month if not present
+        if 'date' not in df.columns and 'year' in df.columns and 'month' in df.columns:
+            # Create date string in YYYY-MM-DD format
+            year = int(df['year'].iloc[0]) if not pd.isna(df['year'].iloc[0]) else 2024
+            month = int(df['month'].iloc[0]) if not pd.isna(df['month'].iloc[0]) else 1
+            df['date'] = f"{year}-{month:02d}-01"
+        
+        # Debug: print received data
+        print(f"DEBUG - Received data: {input_data}")
+        print(f"DEBUG - DataFrame columns: {list(df.columns)}")
+        print(f"DEBUG - DataFrame values:\n{df}")
+        
         # Align columns if feature_names available
         if feature_names:
-            # Add missing columns with 0
+            print(f"DEBUG - Expected features: {feature_names}")
+            # Add missing columns - use median/mode from training data instead of 0
             for col in feature_names:
                 if col not in df.columns:
-                    df[col] = 0.0
+                    # For missing columns, we should not fill with 0 as it affects prediction
+                    # Instead, let the pipeline's imputer handle it
+                    df[col] = np.nan
             
             # Reorder to match training
             df = df[feature_names]
         
-        # Convert all columns to numeric, coerce errors to NaN, then fill with 0
-        for col in df.columns:
-            if df[col].dtype == 'object':
-                df[col] = pd.to_numeric(df[col], errors='coerce')
+        # Don't convert to numeric here - let the pipeline handle it
+        print(f"DEBUG - Final DataFrame before prediction:\n{df}")
         
-        # Fill any NA/NaN values with 0
-        df = df.fillna(0.0).replace([pd.NA], 0.0)
-        
-        # Make prediction
-        prediction = pipeline.predict(df)[0]
+        # Make prediction - ensure DataFrame has proper feature names for LGBMRegressor
+        # Convert to numpy and back to DataFrame to ensure clean column names
+        df_clean = pd.DataFrame(df.values, columns=feature_names)
+        prediction = pipeline.predict(df_clean)[0]
         
         # Ensure prediction is not negative
         prediction = max(0, prediction)
@@ -233,8 +245,10 @@ def predict_batch():
             # Reorder
             df = df[feature_names]
         
-        # Make predictions
-        predictions = pipeline.predict(df)
+        # Make predictions - ensure DataFrame has proper feature names for LGBMRegressor
+        # Convert to clean DataFrame to avoid NAType and feature name warnings
+        df_clean = pd.DataFrame(df.values, columns=feature_names if feature_names else df.columns)
+        predictions = pipeline.predict(df_clean)
         
         # Ensure all predictions are non-negative
         predictions = np.maximum(0, predictions)
@@ -399,4 +413,4 @@ if __name__ == '__main__':
     print("Open http://localhost:5000 in your browser")
     print("="*60 + "\n")
     
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=False, host='0.0.0.0', port=5000)

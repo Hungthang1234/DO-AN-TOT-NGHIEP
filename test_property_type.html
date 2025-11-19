@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Property Type Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-case {
+            background: #f0f0f0;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .result {
+            background: #e8f5e9;
+            padding: 10px;
+            margin-top: 10px;
+            border-left: 4px solid #4caf50;
+        }
+        button {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #1976D2;
+        }
+        #results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏠 Property Type Prediction Test</h1>
+    <p>This page tests if different Property Types give different predictions.</p>
+    
+    <div>
+        <h3>Test Configuration:</h3>
+        <ul>
+            <li>Country: Singapore</li>
+            <li>City: ANG MO KIO</li>
+            <li>Year: 2023</li>
+            <li>Month: 1</li>
+            <li>Area: 100 m²</li>
+            <li><strong>Property Type: VARIES</strong></li>
+        </ul>
+    </div>
+    
+    <button onclick="runTest()">▶️ Run Test for All Property Types</button>
+    <button onclick="clearResults()">🗑️ Clear Results</button>
+    
+    <div id="results"></div>
+    
+    <script>
+        const propertyTypes = [
+            "1 ROOM",
+            "2 ROOM", 
+            "3 ROOM",
+            "4 ROOM",
+            "5 ROOM",
+            "EXECUTIVE",
+            "MULTI-GENERATION"
+        ];
+        
+        async function testPropertyType(propertyType) {
+            const data = {
+                country: "Singapore",
+                city: "ANG MO KIO",
+                year: "2023",
+                month: "1",
+                area_m2: "100",
+                property_type: propertyType
+            };
+            
+            console.log('Testing:', propertyType, 'Data:', data);
+            
+            try {
+                const response = await fetch('http://localhost:5000/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                return {
+                    propertyType,
+                    success: result.success,
+                    prediction: result.prediction,
+                    error: result.error
+                };
+            } catch (error) {
+                return {
+                    propertyType,
+                    success: false,
+                    error: error.message
+                };
+            }
+        }
+        
+        async function runTest() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<h3>🔄 Testing... Please wait...</h3>';
+            
+            const results = [];
+            
+            for (const propType of propertyTypes) {
+                const result = await testPropertyType(propType);
+                results.push(result);
+            }
+            
+            // Display results
+            let html = '<h3>📊 Test Results:</h3>';
+            
+            const predictions = results.map(r => r.prediction).filter(p => p !== undefined);
+            const uniquePredictions = new Set(predictions);
+            
+            html += `<div style="background: #fff3cd; padding: 15px; border-left: 4px solid #ffc107; margin: 20px 0;">`;
+            html += `<strong>Summary:</strong><br>`;
+            html += `Total tests: ${results.length}<br>`;
+            html += `Successful: ${results.filter(r => r.success).length}<br>`;
+            html += `Unique predictions: ${uniquePredictions.size}<br>`;
+            html += `Min: $${Math.min(...predictions).toLocaleString('en-US', {minimumFractionDigits: 2})}<br>`;
+            html += `Max: $${Math.max(...predictions).toLocaleString('en-US', {minimumFractionDigits: 2})}<br>`;
+            html += `Difference: $${(Math.max(...predictions) - Math.min(...predictions)).toLocaleString('en-US', {minimumFractionDigits: 2})}<br>`;
+            
+            if (uniquePredictions.size === 1) {
+                html += `<br>⚠️ <strong style="color: red;">WARNING: All predictions are the same!</strong>`;
+            } else if (uniquePredictions.size < results.length) {
+                html += `<br>⚠️ <strong style="color: orange;">Some predictions are duplicates</strong>`;
+            } else {
+                html += `<br>✅ <strong style="color: green;">All predictions are different!</strong>`;
+            }
+            html += `</div>`;
+            
+            results.forEach(result => {
+                html += '<div class="test-case">';
+                html += `<strong>Property Type: ${result.propertyType}</strong><br>`;
+                
+                if (result.success) {
+                    html += `<div class="result">✅ Prediction: <strong>$${result.prediction.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></div>`;
+                } else {
+                    html += `<div style="background: #ffebee; padding: 10px; margin-top: 10px; border-left: 4px solid #f44336;">❌ Error: ${result.error}</div>`;
+                }
+                
+                html += '</div>';
+            });
+            
+            resultsDiv.innerHTML = html;
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+    </script>
+</body>
+</html>

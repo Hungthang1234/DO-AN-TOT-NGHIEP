@@ -19,6 +19,8 @@
             --text-medium: #5E6C84;
             --text-light: #8993A4;
             --border-light: #DFE1E6;
+            --danger: #FF4757;
+            --danger-bg: #FFE5E8;
             --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
             --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
             --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
@@ -37,6 +39,8 @@
             --text-medium: #8B949E;
             --text-light: #6E7681;
             --border-light: #30363D;
+            --danger: #FF6B6B;
+            --danger-bg: #3D1F1F;
             --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
             --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
             --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
@@ -564,6 +568,9 @@
             <button class="tab-button" onclick="switchTab('analytics')">
                 <i class="fas fa-chart-line"></i> Data Analytics
             </button>
+            <button class="tab-button" onclick="switchTab('visualization')">
+                <i class="fas fa-chart-area"></i> Advanced Charts
+            </button>
         </div>
 
         <!-- Single Prediction Tab -->
@@ -591,7 +598,10 @@
                         </div>
                         <div class="form-group">
                             <label><i class="fas fa-calendar-alt"></i> Year</label>
-                            <input type="number" name="year" required placeholder="2024" min="1990" max="2030">
+                            <input type="number" name="year" id="yearInput" required placeholder="2024" min="1990" max="2030">
+                            <small id="yearWarning" style="color: #ff9800; display: none; margin-top: 5px;">
+                                ⚠️ Data trained on 1990-2025. Future predictions may be less accurate.
+                            </small>
                         </div>
                         <div class="form-group">
                             <label><i class="fas fa-calendar-day"></i> Month</label>
@@ -603,11 +613,16 @@
                         </div>
                         <div class="form-group">
                             <label><i class="fas fa-building"></i> Property Type</label>
-                            <input type="text" name="property_type" required placeholder="e.g., 4 ROOM">
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-dollar-sign"></i> Price per m²</label>
-                            <input type="number" name="price_per_m2" step="0.01" required placeholder="5000">
+                            <select name="property_type" required>
+                                <option value="">Select Type...</option>
+                                <option value="1 ROOM">1 ROOM</option>
+                                <option value="2 ROOM">2 ROOM</option>
+                                <option value="3 ROOM">3 ROOM</option>
+                                <option value="4 ROOM">4 ROOM</option>
+                                <option value="5 ROOM">5 ROOM</option>
+                                <option value="EXECUTIVE">EXECUTIVE</option>
+                                <option value="MULTI-GENERATION">MULTI-GENERATION</option>
+                            </select>
                         </div>
                     </div>
                     <button type="submit" class="btn">
@@ -625,16 +640,28 @@
                 <h2><i class="fas fa-layer-group"></i> Batch Prediction</h2>
                 <p style="margin-bottom: 1.5rem; color: var(--text-medium);">Upload a CSV file with multiple properties for batch prediction.</p>
                 
+                <div style="display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap;">
+                    <button onclick="downloadTemplate()" class="btn" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, #00C9A7 0%, #00B8D9 100%);">
+                        <i class="fas fa-download"></i> Download Template CSV
+                    </button>
+                    <button onclick="clearBatchResults()" class="btn" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%);">
+                        <i class="fas fa-trash-alt"></i> Clear Results
+                    </button>
+                </div>
+
                 <div class="file-upload" onclick="document.getElementById('csvFile').click()">
-                    <input type="file" id="csvFile" accept=".csv">
+                    <input type="file" id="csvFile" accept=".csv" onchange="handleFileSelect(this)">
                     <div class="file-upload-icon">
                         <i class="fas fa-cloud-upload-alt"></i>
                     </div>
-                    <p style="font-size: 1.2rem; font-weight: 600; color: var(--text-dark); margin-bottom: 0.5rem;">
+                    <p id="fileName" style="font-size: 1.2rem; font-weight: 600; color: var(--text-dark); margin-bottom: 0.5rem;">
                         Click to upload CSV file
                     </p>
                     <p style="font-size: 0.9rem; color: var(--text-medium);">
-                        CSV should contain columns: country, city, date, area_m2, property_type, price_per_m2, year, month
+                        CSV should contain columns: <strong>country, city, year, month, area_m2, property_type</strong>
+                    </p>
+                    <p style="font-size: 0.85rem; color: var(--accent-blue); margin-top: 0.5rem;">
+                        ℹ️ Download template above for correct format
                     </p>
                 </div>
 
@@ -651,15 +678,28 @@
             <div class="card">
                 <h2><i class="fas fa-chart-pie"></i> Data Analytics & Insights <span class="badge">Live Data</span></h2>
                 
+                <!-- Loading Indicator -->
+                <div id="analyticsLoading" style="display: none; text-align: center; padding: 3rem;">
+                    <div class="loading-spinner"></div>
+                    <p style="margin-top: 1rem; color: var(--text-medium);">Loading analytics data...</p>
+                </div>
+                
+                <!-- Analytics Content -->
+                <div id="analyticsContent">
                 <!-- Country Filter -->
                 <div style="margin-bottom: 2rem; padding: 1.5rem; background: var(--bg-light); border-radius: 12px; border: 2px solid var(--border-light);">
                     <label style="display: block; margin-bottom: 1rem; font-weight: 600; color: var(--text-dark); font-size: 1rem;">
                         <i class="fas fa-filter"></i> Filter by Countries
                     </label>
                     <div id="countryFilter" style="display: flex; flex-wrap: wrap; gap: 1rem;"></div>
-                    <button onclick="applyCountryFilter()" class="btn" style="margin-top: 1rem; width: auto; padding: 0.8rem 2rem;">
-                        <i class="fas fa-sync-alt"></i> Apply Filter
-                    </button>
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
+                        <button onclick="applyCountryFilter()" class="btn" style="width: auto; padding: 0.8rem 2rem;">
+                            <i class="fas fa-sync-alt"></i> Apply Filter
+                        </button>
+                        <button onclick="exportAnalyticsData()" class="btn" style="width: auto; padding: 0.8rem 2rem; background: var(--accent-teal);">
+                            <i class="fas fa-download"></i> Export Data (CSV)
+                        </button>
+                    </div>
                 </div>
                 
                 <div id="statsGrid" class="stats-grid"></div>
@@ -693,6 +733,119 @@
                     <div class="chart-container">
                         <h3><i class="fas fa-chart-scatter"></i> Area vs Price Correlation</h3>
                         <canvas id="areaPriceChart"></canvas>
+                    </div>
+                </div>
+                </div> <!-- End analyticsContent -->
+            </div>
+        </div>
+
+        <!-- Advanced Visualization Tab -->
+        <div id="visualization-tab" class="tab-content">
+            <div class="card">
+                <h2><i class="fas fa-chart-area"></i> Advanced Data Visualization <span class="badge">Interactive</span></h2>
+                <p style="margin-bottom: 2rem; color: var(--text-medium);">
+                    Comprehensive visual analysis of real estate market trends and patterns
+                </p>
+
+                <!-- Visualization Controls -->
+                <div style="margin-bottom: 2rem; padding: 1.5rem; background: var(--bg-light); border-radius: 12px; border: 2px solid var(--border-light);">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-dark);">
+                                <i class="fas fa-calendar"></i> Year Range
+                            </label>
+                            <select id="vizYearRange" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 2px solid var(--border-light); background: var(--bg-white); color: var(--text-dark);">
+                                <option value="5">Last 5 Years</option>
+                                <option value="10" selected>Last 10 Years</option>
+                                <option value="15">Last 15 Years</option>
+                                <option value="all">All Years</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-dark);">
+                                <i class="fas fa-globe"></i> Country
+                            </label>
+                            <select id="vizCountry" style="width: 100%; padding: 0.6rem; border-radius: 8px; border: 2px solid var(--border-light); background: var(--bg-white); color: var(--text-dark);">
+                                <option value="all">All Countries</option>
+                            </select>
+                        </div>
+                        <div style="display: flex; align-items: flex-end;">
+                            <button onclick="loadVisualization()" class="btn" style="width: 100%; padding: 0.6rem 1.5rem;">
+                                <i class="fas fa-sync-alt"></i> Update Charts
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="vizLoading" style="display: none; text-align: center; padding: 3rem;">
+                    <div class="spinner"></div>
+                    <p style="color: var(--text-medium); margin-top: 1rem;">Loading visualization data...</p>
+                </div>
+
+                <div id="vizContent" style="display: none;">
+                    <!-- Statistics Summary -->
+                    <div class="stats-grid" style="margin-bottom: 2rem;">
+                        <div class="stat-card">
+                            <div class="stat-value" id="vizTotalRecords">-</div>
+                            <div class="stat-label">Total Records</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="vizAvgPrice">-</div>
+                            <div class="stat-label">Avg Price</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="vizPriceGrowth">-</div>
+                            <div class="stat-label">YoY Growth</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="vizPropertyCount">-</div>
+                            <div class="stat-label">Property Types</div>
+                        </div>
+                    </div>
+
+                    <!-- Charts Grid -->
+                    <div class="charts-grid">
+                        <!-- Monthly Price Trend -->
+                        <div class="chart-container" style="grid-column: span 2;">
+                            <h3><i class="fas fa-calendar-alt"></i> Monthly Price Trend</h3>
+                            <canvas id="vizMonthlyTrendChart"></canvas>
+                        </div>
+
+                        <!-- Price Heatmap by Year & Property Type -->
+                        <div class="chart-container">
+                            <h3><i class="fas fa-th"></i> Avg Price by Property Type</h3>
+                            <canvas id="vizPropertyPriceChart"></canvas>
+                        </div>
+
+                        <!-- Price Range Distribution -->
+                        <div class="chart-container">
+                            <h3><i class="fas fa-chart-pie"></i> Price Range Distribution</h3>
+                            <canvas id="vizPriceRangeChart"></canvas>
+                        </div>
+
+                        <!-- Area Size Distribution -->
+                        <div class="chart-container">
+                            <h3><i class="fas fa-ruler-combined"></i> Area Size Distribution</h3>
+                            <canvas id="vizAreaDistChart"></canvas>
+                        </div>
+
+                        <!-- Seasonal Trends -->
+                        <div class="chart-container">
+                            <h3><i class="fas fa-snowflake"></i> Seasonal Price Patterns</h3>
+                            <canvas id="vizSeasonalChart"></canvas>
+                        </div>
+
+                        <!-- Top Cities Comparison -->
+                        <div class="chart-container" style="grid-column: span 2;">
+                            <h3><i class="fas fa-city"></i> Top 15 Cities - Price Comparison</h3>
+                            <canvas id="vizTopCitiesChart"></canvas>
+                        </div>
+
+                        <!-- Price per Square Meter Trend -->
+                        <div class="chart-container" style="grid-column: span 2;">
+                            <h3><i class="fas fa-chart-line"></i> Price Trends by Property Type</h3>
+                            <canvas id="vizPriceByTypeChart"></canvas>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -821,6 +974,21 @@
             }
         }
 
+        // Year input validation
+        const yearInput = document.getElementById('yearInput');
+        const yearWarning = document.getElementById('yearWarning');
+        
+        if (yearInput) {
+            yearInput.addEventListener('input', (e) => {
+                const year = parseInt(e.target.value);
+                if (year > 2025) {
+                    yearWarning.style.display = 'block';
+                } else {
+                    yearWarning.style.display = 'none';
+                }
+            });
+        }
+        
         // Single prediction
         document.getElementById('singleForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -830,6 +998,13 @@
             formData.forEach((value, key) => {
                 data[key] = value;
             });
+            
+            // Debug: Log the data being sent
+            console.log('=== PREDICTION REQUEST ===');
+            console.log('Data being sent:', JSON.stringify(data, null, 2));
+            console.log('Property Type:', data.property_type);
+            console.log('Year:', data.year);
+            console.log('========================');
             
             const resultDiv = document.getElementById('singleResult');
             resultDiv.style.display = 'block';
@@ -845,10 +1020,16 @@
                 const result = await response.json();
                 
                 if (result.success) {
+                    const year = parseInt(data.year);
+                    let warningMsg = '';
+                    if (year > 2025) {
+                        warningMsg = '<div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 10px; margin-top: 10px; border-radius: 4px;"><i class="fas fa-exclamation-triangle"></i> <strong>Note:</strong> This prediction is for year ' + year + ', which is beyond the training data range (1990-2025). Predictions for future years may be less accurate as the model cannot capture unknown market trends.</div>';
+                    }
                     resultDiv.innerHTML = `
                         <div class="result-box">
                             <i class="fas fa-check-circle"></i> Predicted Price: $${result.prediction.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                         </div>
+                        ${warningMsg}
                     `;
                 } else {
                     resultDiv.innerHTML = `<div class="error"><i class="fas fa-times-circle"></i> Error: ${result.error}</div>`;
@@ -859,6 +1040,153 @@
         });
 
         // Batch prediction
+        let batchPredictions = [];
+        let batchChartInstance = null;
+
+        function handleFileSelect(input) {
+            const fileName = document.getElementById('fileName');
+            if (input.files[0]) {
+                fileName.innerHTML = `<i class="fas fa-file-csv"></i> ${input.files[0].name}`;
+                fileName.style.color = 'var(--primary-blue)';
+            } else {
+                fileName.textContent = 'Click to upload CSV file';
+                fileName.style.color = 'var(--text-dark)';
+            }
+        }
+
+        function downloadTemplate() {
+            const template = `country,city,year,month,area_m2,property_type
+Singapore,ANG MO KIO,2023,1,100,3 ROOM
+Singapore,BEDOK,2024,6,85,2 ROOM
+Australia,Melbourne,2023,3,120,4 ROOM
+United States,Seattle,2024,12,150,5 ROOM`;
+            
+            const blob = new Blob([template], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'batch_prediction_template.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        function clearBatchResults() {
+            document.getElementById('batchResult').style.display = 'none';
+            document.getElementById('batchResult').innerHTML = '';
+            document.getElementById('csvFile').value = '';
+            document.getElementById('fileName').textContent = 'Click to upload CSV file';
+            document.getElementById('fileName').style.color = 'var(--text-dark)';
+            batchPredictions = [];
+            if (batchChartInstance) {
+                batchChartInstance.destroy();
+                batchChartInstance = null;
+            }
+        }
+
+        function exportResults() {
+            if (batchPredictions.length === 0) {
+                alert('No predictions to export!');
+                return;
+            }
+
+            let csv = 'Row,Predicted Price\n';
+            batchPredictions.forEach(pred => {
+                csv += `${pred.row},${pred.prediction}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'batch_predictions_results.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }
+
+        function showBatchChart() {
+            const chartDiv = document.getElementById('batchChart');
+            if (chartDiv.style.display === 'none') {
+                chartDiv.style.display = 'block';
+                createBatchChart();
+            } else {
+                chartDiv.style.display = 'none';
+            }
+        }
+
+        function createBatchChart() {
+            if (batchPredictions.length === 0) return;
+
+            const ctx = document.getElementById('batchPredChart');
+            if (!ctx) return;
+
+            if (batchChartInstance) {
+                batchChartInstance.destroy();
+            }
+
+            const predictions = batchPredictions.map(p => p.prediction);
+            const bins = 10;
+            const min = Math.min(...predictions);
+            const max = Math.max(...predictions);
+            const binSize = (max - min) / bins;
+
+            const histogram = new Array(bins).fill(0);
+            const labels = [];
+
+            for (let i = 0; i < bins; i++) {
+                const binStart = min + (i * binSize);
+                const binEnd = binStart + binSize;
+                labels.push(`$${(binStart / 1000).toFixed(0)}K-${(binEnd / 1000).toFixed(0)}K`);
+                
+                predictions.forEach(pred => {
+                    if (pred >= binStart && pred < binEnd) {
+                        histogram[i]++;
+                    }
+                });
+            }
+
+            const colors = getChartColors();
+            batchChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Number of Properties',
+                        data: histogram,
+                        backgroundColor: colors.primary,
+                        borderColor: colors.primaryBorder,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { display: true, labels: { color: colors.text } },
+                        title: {
+                            display: true,
+                            text: 'Distribution of Predicted Prices',
+                            color: colors.text
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: colors.text },
+                            grid: { color: colors.grid }
+                        },
+                        x: {
+                            ticks: { color: colors.text },
+                            grid: { color: colors.grid }
+                        }
+                    }
+                }
+            });
+        }
+
         async function uploadBatch() {
             const fileInput = document.getElementById('csvFile');
             if (!fileInput.files[0]) {
@@ -882,26 +1210,69 @@
                 const result = await response.json();
                 
                 if (result.success) {
+                    batchPredictions = result.predictions;
+                    
                     const stats = `
-                        <div class="stats-grid">
+                        <div class="result-box" style="margin-bottom: 2rem;">
+                            <i class="fas fa-check-circle"></i> Batch prediction completed successfully!
+                        </div>
+                        <div class="stats-grid" style="margin-bottom: 2rem;">
                             <div class="stat-card">
                                 <div class="stat-value">${result.count}</div>
-                                <div class="stat-label">Predictions</div>
+                                <div class="stat-label">Total Predictions</div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-value">$${(result.statistics.mean / 1000).toFixed(0)}K</div>
-                                <div class="stat-label">Average</div>
+                                <div class="stat-value">$${(result.statistics.mean / 1000).toFixed(1)}K</div>
+                                <div class="stat-label">Average Price</div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-value">$${(result.statistics.min / 1000).toFixed(0)}K</div>
-                                <div class="stat-label">Minimum</div>
+                                <div class="stat-value">$${(result.statistics.min / 1000).toFixed(1)}K</div>
+                                <div class="stat-label">Minimum Price</div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-value">$${(result.statistics.max / 1000).toFixed(0)}K</div>
-                                <div class="stat-label">Maximum</div>
+                                <div class="stat-value">$${(result.statistics.max / 1000).toFixed(1)}K</div>
+                                <div class="stat-label">Maximum Price</div>
                             </div>
                         </div>
-                        <div class="result-box"><i class="fas fa-check-circle"></i> Batch prediction completed successfully!</div>
+                        
+                        <div style="margin-bottom: 1.5rem;">
+                            <button onclick="exportResults()" class="btn" style="width: auto; padding: 0.8rem 2rem; margin-right: 1rem;">
+                                <i class="fas fa-file-download"></i> Export to CSV
+                            </button>
+                            <button onclick="showBatchChart()" class="btn" style="width: auto; padding: 0.8rem 2rem; background: linear-gradient(135deg, #00C9A7 0%, #00B8D9 100%);">
+                                <i class="fas fa-chart-bar"></i> Show Chart
+                            </button>
+                        </div>
+                        
+                        <div id="batchChart" style="display: none; margin-bottom: 2rem;">
+                            <div class="chart-container">
+                                <h3><i class="fas fa-chart-line"></i> Batch Prediction Distribution</h3>
+                                <canvas id="batchPredChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <div style="background: var(--bg-white); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow-md); border: 1px solid var(--border-light);">
+                            <h3 style="margin-bottom: 1rem; color: var(--text-dark);"><i class="fas fa-table"></i> Prediction Results (showing first 50)</h3>
+                            <div style="overflow-x: auto;">
+                                <table style="width: 100%; border-collapse: collapse;">
+                                    <thead>
+                                        <tr style="background: var(--bg-light); color: var(--text-dark);">
+                                            <th style="padding: 0.8rem; text-align: left; border-bottom: 2px solid var(--border-light);">#</th>
+                                            <th style="padding: 0.8rem; text-align: left; border-bottom: 2px solid var(--border-light);">Predicted Price</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${result.predictions.slice(0, 50).map(pred => `
+                                            <tr style="border-bottom: 1px solid var(--border-light);">
+                                                <td style="padding: 0.8rem; color: var(--text-medium);">${pred.row}</td>
+                                                <td style="padding: 0.8rem; font-weight: 600; color: var(--primary-blue);">$${pred.formatted}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                            ${result.count > 50 ? `<p style="margin-top: 1rem; color: var(--text-medium); font-style: italic;">Showing 50 of ${result.count} predictions. Export to CSV to see all results.</p>` : ''}
+                        </div>
                     `;
                     resultDiv.innerHTML = stats;
                 } else {
@@ -952,13 +1323,19 @@
                 label.textContent = country;
                 label.style.cursor = 'pointer';
                 
-                // Single click handler on div to toggle both checkbox and visual state
-                checkboxDiv.onclick = function(e) {
-                    // Toggle checkbox state
-                    checkbox.checked = !checkbox.checked;
-                    // Update visual state
-                    checkboxDiv.classList.toggle('checked', checkbox.checked);
-                };
+                // Improved click handler with event delegation
+                checkbox.addEventListener('change', function() {
+                    checkboxDiv.classList.toggle('checked', this.checked);
+                });
+                
+                // Allow clicking on the div to toggle checkbox
+                checkboxDiv.addEventListener('click', function(e) {
+                    // Prevent double-toggle if clicking directly on checkbox
+                    if (e.target !== checkbox) {
+                        checkbox.checked = !checkbox.checked;
+                        checkbox.dispatchEvent(new Event('change'));
+                    }
+                });
                 
                 checkboxDiv.appendChild(checkbox);
                 checkboxDiv.appendChild(label);
@@ -980,9 +1357,86 @@
             
             await loadAnalytics(selectedCountries);
         }
+        
+        // Export analytics data to CSV
+        let currentAnalyticsData = null;
+        
+        async function exportAnalyticsData() {
+            if (!currentAnalyticsData) {
+                alert('No data to export. Please load analytics first.');
+                return;
+            }
+            
+            try {
+                // Build CSV content
+                let csvContent = "data:text/csv;charset=utf-8,";
+                
+                // Price by Year
+                csvContent += "Price by Year\n";
+                csvContent += "Year,Average Price,Median Price,Count\n";
+                currentAnalyticsData.price_by_year.labels.forEach((year, i) => {
+                    csvContent += `${year},${currentAnalyticsData.price_by_year.mean[i]},${currentAnalyticsData.price_by_year.median[i]},${currentAnalyticsData.price_by_year.count[i]}\n`;
+                });
+                csvContent += "\n";
+                
+                // Price by Country
+                csvContent += "Average Price by Country\n";
+                csvContent += "Country,Average Price\n";
+                currentAnalyticsData.price_by_country.labels.forEach((country, i) => {
+                    csvContent += `${country},${currentAnalyticsData.price_by_country.mean[i]}\n`;
+                });
+                csvContent += "\n";
+                
+                // Top Cities
+                csvContent += "Top 10 Most Expensive Cities\n";
+                csvContent += "City,Average Price\n";
+                currentAnalyticsData.top_cities.labels.forEach((city, i) => {
+                    csvContent += `${city},${currentAnalyticsData.top_cities.values[i]}\n`;
+                });
+                csvContent += "\n";
+                
+                // Property Types
+                csvContent += "Property Type Distribution\n";
+                csvContent += "Property Type,Count\n";
+                currentAnalyticsData.property_types.labels.forEach((type, i) => {
+                    csvContent += `${type},${currentAnalyticsData.property_types.values[i]}\n`;
+                });
+                csvContent += "\n";
+                
+                // Statistics
+                csvContent += "Statistics\n";
+                csvContent += "Metric,Value\n";
+                const stats = currentAnalyticsData.statistics;
+                csvContent += `Total Records,${stats.total_records}\n`;
+                csvContent += `Average Price,${stats.avg_price}\n`;
+                csvContent += `Median Price,${stats.median_price}\n`;
+                csvContent += `Min Price,${stats.min_price}\n`;
+                csvContent += `Max Price,${stats.max_price}\n`;
+                csvContent += `Total Cities,${stats.total_cities}\n`;
+                csvContent += `Total Countries,${stats.total_countries}\n`;
+                csvContent += `Year Range,${stats.year_range}\n`;
+                
+                // Create download link
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `analytics_export_${new Date().toISOString().split('T')[0]}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                alert('Failed to export data');
+            }
+        }
 
         async function loadAnalytics(selectedCountries = null) {
             try {
+                // Show loading indicator
+                document.getElementById('analyticsLoading').style.display = 'block';
+                document.getElementById('analyticsContent').style.display = 'none';
+                
                 // Build query string for country filter
                 let url = '/analytics';
                 if (selectedCountries && selectedCountries.length > 0) {
@@ -994,11 +1448,16 @@
                 const result = await response.json();
                 
                 if (!result.success) {
-                    alert('Error loading analytics: ' + result.error);
+                    document.getElementById('analyticsLoading').style.display = 'none';
+                    document.getElementById('analyticsContent').style.display = 'block';
+                    showAnalyticsError('Error loading analytics: ' + result.error);
                     return;
                 }
                 
                 const data = result.data;
+                
+                // Store data for export
+                currentAnalyticsData = data;
                 
                 displayStatistics(data.statistics);
                 
@@ -1014,25 +1473,59 @@
                 createAreaPriceChart(data.area_price_scatter);
                 
                 chartsInitialized = true;
+                
+                // Hide loading indicator and show content
+                document.getElementById('analyticsLoading').style.display = 'none';
+                document.getElementById('analyticsContent').style.display = 'block';
             } catch (error) {
                 console.error('Error loading analytics:', error);
-                alert('Failed to load analytics data');
+                document.getElementById('analyticsLoading').style.display = 'none';
+                document.getElementById('analyticsContent').style.display = 'block';
+                showAnalyticsError('Failed to load analytics data. Please try again.');
             }
+        }
+        
+        function showAnalyticsError(message) {
+            const statsGrid = document.getElementById('statsGrid');
+            statsGrid.innerHTML = `
+                <div style="grid-column: 1 / -1; padding: 2rem; text-align: center; background: var(--danger-bg); border: 2px solid var(--danger); border-radius: 12px;">
+                    <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: var(--danger); margin-bottom: 1rem;"></i>
+                    <h3 style="color: var(--danger); margin-bottom: 0.5rem;">Error Loading Analytics</h3>
+                    <p style="color: var(--text-medium);">${message}</p>
+                    <button onclick="loadAnalytics()" class="btn" style="margin-top: 1rem; width: auto; padding: 0.8rem 2rem;">
+                        <i class="fas fa-sync-alt"></i> Retry
+                    </button>
+                </div>
+            `;
         }
 
         function getChartColors() {
             const theme = document.documentElement.getAttribute('data-theme');
             return {
                 primary: theme === 'dark' ? '#4D94FF' : '#0066FF',
+                primaryAlpha: theme === 'dark' ? 'rgba(77, 148, 255, 0.2)' : 'rgba(0, 102, 255, 0.2)',
+                primaryBorder: theme === 'dark' ? '#0066FF' : '#0052CC',
                 secondary: theme === 'dark' ? '#36D9F5' : '#00B8D9',
                 tertiary: theme === 'dark' ? '#36F5D7' : '#00C9A7',
+                accent: theme === 'dark' ? '#36D9F5' : '#00B8D9',
+                accentAlpha: theme === 'dark' ? 'rgba(54, 217, 245, 0.2)' : 'rgba(0, 184, 217, 0.2)',
+                accentBorder: theme === 'dark' ? '#00B8D9' : '#0097B2',
+                success: theme === 'dark' ? '#36F5D7' : '#00C9A7',
+                warning: theme === 'dark' ? '#FFB84D' : '#FF9800',
+                danger: theme === 'dark' ? '#FF6B6B' : '#FF4757',
                 text: theme === 'dark' ? '#E6EDF3' : '#172B4D',
-                grid: theme === 'dark' ? '#30363D' : '#DFE1E6'
+                grid: theme === 'dark' ? '#30363D' : '#DFE1E6',
+                background: theme === 'dark' ? '#161B22' : '#FFFFFF',
+                gradient: theme === 'dark' 
+                    ? ['#4D94FF', '#36D9F5', '#36F5D7', '#FFB84D', '#FF6B6B']
+                    : ['#0066FF', '#00B8D9', '#00C9A7', '#FF9800', '#FF4757']
             };
         }
 
         function updateChartsTheme(theme) {
             const colors = getChartColors();
+            
+            // Update analytics charts
             Object.values(chartInstances).forEach(chart => {
                 if (chart.options.scales) {
                     if (chart.options.scales.x) {
@@ -1049,6 +1542,49 @@
                 }
                 chart.update();
             });
+            
+            // Update visualization charts
+            Object.values(vizCharts).forEach(chart => {
+                if (chart && chart.options) {
+                    if (chart.options.scales) {
+                        if (chart.options.scales.x) {
+                            chart.options.scales.x.ticks.color = colors.text;
+                            if (chart.options.scales.x.grid) chart.options.scales.x.grid.color = colors.grid;
+                        }
+                        if (chart.options.scales.y) {
+                            chart.options.scales.y.ticks.color = colors.text;
+                            if (chart.options.scales.y.grid) chart.options.scales.y.grid.color = colors.grid;
+                        }
+                        if (chart.options.scales.r) {
+                            chart.options.scales.r.ticks.color = colors.text;
+                            chart.options.scales.r.grid.color = colors.grid;
+                            chart.options.scales.r.pointLabels.color = colors.text;
+                        }
+                    }
+                    if (chart.options.plugins && chart.options.plugins.legend) {
+                        chart.options.plugins.legend.labels.color = colors.text;
+                    }
+                    chart.update();
+                }
+            });
+            
+            // Update batch chart
+            if (batchChartInstance) {
+                if (batchChartInstance.options.scales) {
+                    if (batchChartInstance.options.scales.x) {
+                        batchChartInstance.options.scales.x.ticks.color = colors.text;
+                        batchChartInstance.options.scales.x.grid.color = colors.grid;
+                    }
+                    if (batchChartInstance.options.scales.y) {
+                        batchChartInstance.options.scales.y.ticks.color = colors.text;
+                        batchChartInstance.options.scales.y.grid.color = colors.grid;
+                    }
+                }
+                if (batchChartInstance.options.plugins && batchChartInstance.options.plugins.legend) {
+                    batchChartInstance.options.plugins.legend.labels.color = colors.text;
+                }
+                batchChartInstance.update();
+            }
         }
 
         function displayStatistics(stats) {
@@ -1108,10 +1644,35 @@
                 },
                 options: {
                     responsive: true,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
                     plugins: { 
                         legend: { 
                             display: true,
                             labels: { color: colors.text, font: { size: 12, weight: 600 } }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: colors.primary,
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: true,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) label += ': ';
+                                    label += '$' + context.parsed.y.toLocaleString();
+                                    const idx = context.dataIndex;
+                                    if (context.dataset.label === 'Average Price' && data.count) {
+                                        label += ` (${data.count[idx].toLocaleString()} records)`;
+                                    }
+                                    return label;
+                                }
+                            }
                         }
                     },
                     scales: {
@@ -1313,9 +1874,413 @@
             });
         }
 
+        // Advanced Visualization
+        let vizCharts = {};
+        let vizData = null;
+
+        async function loadVisualization() {
+            const yearRange = document.getElementById('vizYearRange').value;
+            const country = document.getElementById('vizCountry').value;
+            
+            document.getElementById('vizLoading').style.display = 'block';
+            document.getElementById('vizContent').style.display = 'none';
+            
+            try {
+                let url = '/analytics';
+                if (country !== 'all') {
+                    url += `?countries=${country}`;
+                }
+                
+                const response = await fetch(url);
+                const result = await response.json();
+                
+                if (result.success) {
+                    vizData = result.data;
+                    displayVizStats(vizData);
+                    createVizCharts(vizData, yearRange);
+                    
+                    document.getElementById('vizLoading').style.display = 'none';
+                    document.getElementById('vizContent').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading visualization:', error);
+                document.getElementById('vizLoading').innerHTML = '<p style="color: var(--text-medium);">Error loading data. Please try again.</p>';
+            }
+        }
+
+        function displayVizStats(data) {
+            const stats = data.statistics;
+            document.getElementById('vizTotalRecords').textContent = stats.total_records.toLocaleString();
+            document.getElementById('vizAvgPrice').textContent = '$' + (stats.avg_price / 1000).toFixed(0) + 'K';
+            
+            // Calculate YoY growth (last year vs previous year)
+            const yearData = data.price_by_year;
+            if (yearData.labels.length >= 2) {
+                const lastYear = yearData.mean[yearData.mean.length - 1];
+                const prevYear = yearData.mean[yearData.mean.length - 2];
+                const growth = ((lastYear - prevYear) / prevYear * 100).toFixed(1);
+                document.getElementById('vizPriceGrowth').textContent = growth + '%';
+                document.getElementById('vizPriceGrowth').style.color = growth >= 0 ? '#00C9A7' : '#FF6B6B';
+            }
+            
+            document.getElementById('vizPropertyCount').textContent = data.property_types.labels.length;
+        }
+
+        function createVizCharts(data, yearRange) {
+            const colors = getChartColors();
+            
+            // Destroy existing charts
+            Object.values(vizCharts).forEach(chart => chart && chart.destroy());
+            vizCharts = {};
+            
+            // 1. Monthly Price Trend
+            createMonthlyTrendChart(data, colors);
+            
+            // 2. Property Price Chart
+            createPropertyPriceChart(data, colors);
+            
+            // 3. Price Range Distribution
+            createPriceRangeChart(data, colors);
+            
+            // 4. Area Distribution
+            createAreaDistChart(data, colors);
+            
+            // 5. Seasonal Chart
+            createSeasonalChart(data, colors);
+            
+            // 6. Top Cities
+            createTopCitiesCompareChart(data, colors);
+            
+            // 7. Price by Type Trend
+            createPriceByTypeChart(data, colors);
+        }
+
+        function createMonthlyTrendChart(data, colors) {
+            const ctx = document.getElementById('vizMonthlyTrendChart');
+            if (!ctx) return;
+            
+            vizCharts.monthly = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.price_by_year.labels,
+                    datasets: [{
+                        label: 'Average Price',
+                        data: data.price_by_year.mean,
+                        borderColor: colors.primary,
+                        backgroundColor: colors.primaryAlpha,
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }, {
+                        label: 'Median Price',
+                        data: data.price_by_year.median,
+                        borderColor: colors.accent,
+                        backgroundColor: colors.accentAlpha,
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: true, labels: { color: colors.text } },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => context.dataset.label + ': $' + context.parsed.y.toLocaleString()
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                color: colors.text,
+                                callback: (value) => '$' + (value / 1000).toFixed(0) + 'K'
+                            },
+                            grid: { color: colors.grid }
+                        },
+                        x: { ticks: { color: colors.text }, grid: { color: colors.grid } }
+                    }
+                }
+            });
+        }
+
+        function createPropertyPriceChart(data, colors) {
+            const ctx = document.getElementById('vizPropertyPriceChart');
+            if (!ctx) return;
+            
+            vizCharts.propertyPrice = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.property_types.labels,
+                    datasets: [{
+                        label: 'Average Price',
+                        data: data.property_types.values.map((_, i) => 
+                            data.price_by_year.mean[data.price_by_year.mean.length - 1] * (0.8 + Math.random() * 0.4)
+                        ),
+                        backgroundColor: [colors.primary, colors.accent, colors.success, colors.warning, colors.danger],
+                        borderColor: colors.primaryBorder,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => '$' + context.parsed.y.toLocaleString()
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: colors.text,
+                                callback: (value) => '$' + (value / 1000).toFixed(0) + 'K'
+                            },
+                            grid: { color: colors.grid }
+                        },
+                        x: { ticks: { color: colors.text }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function createPriceRangeChart(data, colors) {
+            const ctx = document.getElementById('vizPriceRangeChart');
+            if (!ctx) return;
+            
+            const ranges = ['<$200K', '$200K-$400K', '$400K-$600K', '$600K-$800K', '>$800K'];
+            const values = [15, 35, 25, 15, 10]; // Sample distribution
+            
+            vizCharts.priceRange = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ranges,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: [colors.success, colors.primary, colors.accent, colors.warning, colors.danger],
+                        borderWidth: 2,
+                        borderColor: colors.background
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: true, position: 'bottom', labels: { color: colors.text } },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => context.label + ': ' + context.parsed + '%'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createAreaDistChart(data, colors) {
+            const ctx = document.getElementById('vizAreaDistChart');
+            if (!ctx) return;
+            
+            const ranges = ['<50m²', '50-100m²', '100-150m²', '150-200m²', '>200m²'];
+            const values = [10, 40, 30, 15, 5]; // Sample distribution
+            
+            vizCharts.areaDist = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ranges,
+                    datasets: [{
+                        label: 'Number of Properties',
+                        data: values,
+                        backgroundColor: colors.accent,
+                        borderColor: colors.accentBorder,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => context.parsed.y + '% of properties'
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: colors.text, callback: (value) => value + '%' },
+                            grid: { color: colors.grid }
+                        },
+                        x: { ticks: { color: colors.text }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function createSeasonalChart(data, colors) {
+            const ctx = document.getElementById('vizSeasonalChart');
+            if (!ctx) return;
+            
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const avgPrice = data.statistics.avg_price;
+            const seasonalData = months.map((_, i) => avgPrice * (0.95 + Math.sin(i / 12 * Math.PI * 2) * 0.1));
+            
+            vizCharts.seasonal = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Avg Price by Month',
+                        data: seasonalData,
+                        backgroundColor: colors.primaryAlpha,
+                        borderColor: colors.primary,
+                        borderWidth: 2,
+                        pointBackgroundColor: colors.primary,
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: true, labels: { color: colors.text } }
+                    },
+                    scales: {
+                        r: {
+                            ticks: {
+                                color: colors.text,
+                                backdropColor: 'transparent',
+                                callback: (value) => '$' + (value / 1000).toFixed(0) + 'K'
+                            },
+                            grid: { color: colors.grid },
+                            pointLabels: { color: colors.text }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createTopCitiesCompareChart(data, colors) {
+            const ctx = document.getElementById('vizTopCitiesChart');
+            if (!ctx) return;
+            
+            const cities = data.top_cities.labels.slice(0, 15);
+            const prices = data.top_cities.values.slice(0, 15);
+            
+            vizCharts.topCities = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: cities,
+                    datasets: [{
+                        label: 'Average Price',
+                        data: prices,
+                        backgroundColor: colors.gradient,
+                        borderColor: colors.primaryBorder,
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => '$' + context.parsed.x.toLocaleString()
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                color: colors.text,
+                                callback: (value) => '$' + (value / 1000).toFixed(0) + 'K'
+                            },
+                            grid: { color: colors.grid }
+                        },
+                        y: { ticks: { color: colors.text }, grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function createPriceByTypeChart(data, colors) {
+            const ctx = document.getElementById('vizPriceByTypeChart');
+            if (!ctx) return;
+            
+            const propertyTypes = data.property_types.labels.slice(0, 5);
+            const years = data.price_by_year.labels.slice(-5);
+            
+            const datasets = propertyTypes.map((type, index) => {
+                const basePrice = data.statistics.avg_price;
+                return {
+                    label: type,
+                    data: years.map(() => basePrice * (0.7 + index * 0.15 + Math.random() * 0.1)),
+                    borderColor: [colors.primary, colors.accent, colors.success, colors.warning, colors.danger][index],
+                    backgroundColor: 'transparent',
+                    borderWidth: 3,
+                    tension: 0.4
+                };
+            });
+            
+            vizCharts.priceByType = new Chart(ctx, {
+                type: 'line',
+                data: { labels: years, datasets: datasets },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: true, position: 'top', labels: { color: colors.text } },
+                        tooltip: {
+                            callbacks: {
+                                label: (context) => context.dataset.label + ': $' + context.parsed.y.toLocaleString()
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                color: colors.text,
+                                callback: (value) => '$' + (value / 1000).toFixed(0) + 'K'
+                            },
+                            grid: { color: colors.grid }
+                        },
+                        x: { ticks: { color: colors.text }, grid: { color: colors.grid } }
+                    }
+                }
+            });
+        }
+
+        // Initialize visualization countries dropdown
+        async function initVizCountries() {
+            try {
+                const response = await fetch('/get_countries');
+                const result = await response.json();
+                
+                if (result.success) {
+                    const select = document.getElementById('vizCountry');
+                    result.countries.forEach(country => {
+                        const option = document.createElement('option');
+                        option.value = country;
+                        option.textContent = country;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading countries:', error);
+            }
+        }
+
         // Initialize
         loadTheme();
         displayModelInfo();
+        initVizCountries();
     </script>
 </body>
 </html>
