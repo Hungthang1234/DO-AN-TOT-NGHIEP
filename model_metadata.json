@@ -1,0 +1,27 @@
+{
+  "model_name": "LightGBM",
+  "version": "1.0.0",
+  "trained_date": "2025-11-22",
+  "metrics": {
+    "rmse": 46958.14,
+    "r2": 0.9319,
+    "mae": 0.0
+  },
+  "features": [
+    "country",
+    "city",
+    "year",
+    "month",
+    "area_m2",
+    "property_type",
+    "date"
+  ],
+  "feature_count": 7,
+  "training_info": {
+    "dataset": "cleaned_real_estate.csv",
+    "total_samples": 978768,
+    "train_test_split": 0.2
+  },
+  "model_path": "models/best.joblib",
+  "last_updated": "2025-11-24 22:54:36"
+}

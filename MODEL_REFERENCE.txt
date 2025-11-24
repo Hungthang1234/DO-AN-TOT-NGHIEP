@@ -1,0 +1,27 @@
+======================================================================
+HOUSE PRICE PREDICTION - MODEL QUICK REFERENCE
+======================================================================
+Generated: 2025-11-24 22:59:00
+
+CURRENT BEST MODEL:
+  Name: LightGBM
+  RMSE: 46,958.14
+  R²: 0.9319
+  MAE: 0.00
+  Features: 7
+  Feature List: country, city, date, area_m2, property_type, year, month
+
+AVAILABLE MODELS:
+
+  • best.joblib
+    Model: LightGBM
+    RMSE: 46,958.14
+    R²: 0.9319
+
+======================================================================
+HOW TO USE:
+  1. Start web app: python app.py
+  2. Open browser: http://localhost:5000
+  3. Model loads automatically from models/best.joblib
+  4. No need to retrain - all metrics are saved!
+======================================================================

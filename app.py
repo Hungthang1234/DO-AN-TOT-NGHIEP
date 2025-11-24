@@ -7,15 +7,69 @@ import pandas as pd
 import numpy as np
 import joblib
 import traceback
+import time
+import json
+from datetime import datetime
+from logger_config import ModelLogger, PredictionLogger, AnalyticsLogger
 
 app = Flask(__name__)
 
 # Load model at startup
 MODEL_PATH = Path("models/best.joblib")
+METADATA_PATH = Path("model_metadata.json")
 model_data = None
+model_metadata = None
+
+def save_model_metadata():
+    """Save model metadata to JSON file"""
+    global model_data, model_metadata
+    try:
+        if model_data and isinstance(model_data, dict):
+            metadata = {
+                'model_name': model_data.get('model_name', 'Unknown'),
+                'version': '1.0.0',
+                'trained_date': datetime.now().strftime('%Y-%m-%d'),
+                'metrics': {
+                    'rmse': float(model_data.get('rmse', 0)),
+                    'r2': float(model_data.get('r2', 0)),
+                    'mae': float(model_data.get('mae', 0))
+                },
+                'features': model_data.get('feature_names', []),
+                'feature_count': len(model_data.get('feature_names', [])),
+                'training_info': {
+                    'dataset': 'cleaned_real_estate.csv',
+                    'total_samples': model_data.get('train_samples', 0) + model_data.get('test_samples', 0),
+                    'train_test_split': 0.2
+                },
+                'model_path': str(MODEL_PATH),
+                'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }
+            
+            with open(METADATA_PATH, 'w', encoding='utf-8') as f:
+                json.dump(metadata, f, indent=2, ensure_ascii=False)
+            
+            model_metadata = metadata
+            print(f"✓ Model metadata saved to {METADATA_PATH}")
+            return True
+    except Exception as e:
+        print(f"⚠ Error saving metadata: {e}")
+    return False
+
+def load_model_metadata():
+    """Load model metadata from JSON file"""
+    global model_metadata
+    try:
+        if METADATA_PATH.exists():
+            with open(METADATA_PATH, 'r', encoding='utf-8') as f:
+                model_metadata = json.load(f)
+            print(f"✓ Model metadata loaded from {METADATA_PATH}")
+            return True
+    except Exception as e:
+        print(f"⚠ Error loading metadata: {e}")
+    return False
 
 def load_model():
-    """Load the trained model"""
+    """Load the trained model and metadata"""
     global model_data
     try:
         if MODEL_PATH.exists():
@@ -30,6 +84,12 @@ def load_model():
                     print(f"  RMSE: {rmse_val:.2f}")
                 if r2_val is not None:
                     print(f"  R²: {r2_val:.4f}")
+                
+                # Load or create metadata
+                if not load_model_metadata():
+                    save_model_metadata()
+            else:
+                print(f"⚠ Model loaded but not in expected format")
         else:
             print(f"⚠ Model file not found at {MODEL_PATH}")
             print("  Run train_pipeline.py first to create the model")
@@ -184,6 +244,9 @@ def predict():
         # Ensure prediction is not negative
         prediction = max(0, prediction)
         
+        # Log prediction
+        PredictionLogger.log_prediction(input_data, prediction, prediction_type='single')
+        
         return jsonify({
             'success': True,
             'prediction': float(prediction),
@@ -253,6 +316,14 @@ def predict_batch():
         # Ensure all predictions are non-negative
         predictions = np.maximum(0, predictions)
         
+        # Log batch prediction
+        PredictionLogger.log_batch_prediction(
+            batch_size=len(predictions),
+            avg_price=float(predictions.mean()),
+            min_price=float(predictions.min()),
+            max_price=float(predictions.max())
+        )
+        
         # Prepare results
         results = []
         for idx, pred in enumerate(predictions[:100]):  # Limit to 100 rows for display
@@ -307,6 +378,7 @@ def reload_model():
 @app.route('/analytics', methods=['GET'])
 def analytics():
     """Get analytics data for visualization with advanced filters"""
+    start_time = time.time()
     try:
         # Get filters from query parameters
         selected_countries = request.args.getlist('countries')
@@ -477,6 +549,21 @@ def analytics():
             }
         }
         
+        # Log analytics query
+        response_time = (time.time() - start_time) * 1000  # Convert to ms
+        AnalyticsLogger.log_analytics_query(
+            filters={
+                'countries': selected_countries,
+                'year_from': year_from,
+                'year_to': year_to,
+                'property_types': selected_property_types,
+                'price_min': price_min,
+                'price_max': price_max
+            },
+            record_count=len(df),
+            response_time=response_time
+        )
+        
         return jsonify(analytics_data)
         
     except Exception as e:
@@ -487,6 +574,80 @@ def analytics():
             'error': f'Error loading analytics: {str(e)}',
             'traceback': traceback.format_exc()
         }), 500
+
+
+@app.route('/logs', methods=['GET'])
+def view_logs():
+    """View system logs"""
+    try:
+        from logger_config import generate_summary_report
+        
+        log_type = request.args.get('type', 'summary')
+        
+        if log_type == 'summary':
+            report = generate_summary_report()
+            return jsonify({'success': True, 'data': report})
+        
+        elif log_type == 'training':
+            history = ModelLogger.get_training_history(limit=50)
+            return jsonify({
+                'success': True,
+                'data': history.to_dict(orient='records') if not history.empty else []
+            })
+        
+        elif log_type == 'predictions':
+            recent = PredictionLogger.get_recent_predictions(limit=100)
+            stats = PredictionLogger.get_prediction_stats()
+            return jsonify({
+                'success': True,
+                'recent_predictions': recent.to_dict(orient='records') if not recent.empty else [],
+                'statistics': stats
+            })
+        
+        elif log_type == 'best':
+            best = ModelLogger.get_best_model()
+            return jsonify({
+                'success': True,
+                'best_model': best if best else {}
+            })
+        
+        else:
+            return jsonify({'success': False, 'error': 'Invalid log type'})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/model_info', methods=['GET'])
+def model_info():
+    """Get current model information and metadata"""
+    try:
+        global model_metadata
+        
+        if model_metadata:
+            return jsonify({
+                'success': True,
+                'metadata': model_metadata,
+                'model_loaded': model_data is not None,
+                'model_path': str(MODEL_PATH)
+            })
+        else:
+            # Try to load metadata if not loaded
+            if load_model_metadata():
+                return jsonify({
+                    'success': True,
+                    'metadata': model_metadata,
+                    'model_loaded': model_data is not None,
+                    'model_path': str(MODEL_PATH)
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'error': 'Model metadata not found',
+                    'model_loaded': model_data is not None
+                })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 
 if __name__ == '__main__':

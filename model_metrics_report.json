@@ -1,0 +1,55 @@
+{
+  "generated_at": "2025-11-24 22:58:57",
+  "models": [
+    {
+      "file_name": "best.joblib",
+      "model_name": "LightGBM",
+      "metrics": {
+        "rmse": 46958.14165260404,
+        "r2": 0.9319096131190898,
+        "mae": 0.0
+      },
+      "features": [
+        "country",
+        "city",
+        "date",
+        "area_m2",
+        "property_type",
+        "year",
+        "month"
+      ],
+      "feature_count": 7,
+      "training_samples": 0,
+      "test_samples": 0
+    }
+  ],
+  "best_model": {
+    "file_name": "best.joblib",
+    "model_name": "LightGBM",
+    "metrics": {
+      "rmse": 46958.14165260404,
+      "r2": 0.9319096131190898,
+      "mae": 0.0
+    },
+    "features": [
+      "country",
+      "city",
+      "date",
+      "area_m2",
+      "property_type",
+      "year",
+      "month"
+    ],
+    "feature_count": 7,
+    "training_samples": 0,
+    "test_samples": 0
+  },
+  "summary": {
+    "total_models": 1,
+    "model_names": [
+      "LightGBM"
+    ],
+    "best_model_name": "LightGBM",
+    "best_r2": 0.9319096131190898
+  }
+}
