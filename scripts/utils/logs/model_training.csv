@@ -1,0 +1,2 @@
+timestamp,model_name,mae,rmse,r2,train_samples,test_samples,training_time_seconds,hyperparameters,notes
+2025-11-25 00:19:53,LightGBM (Full Dataset - 978K rows),32052.123329514725,49357.730526190804,0.9244879232854616,783014,195754,77.05401301383972,,"Full dataset, Year range: 1990-2025, Gap: -0.0004, Year impact: 41.4%"

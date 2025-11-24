@@ -9,13 +9,19 @@ import joblib
 import traceback
 import time
 import json
+import sys
 from datetime import datetime
+from pathlib import Path
+
+# Add scripts/utils to path for imports
+sys.path.insert(0, str(Path(__file__).parent / 'scripts' / 'utils'))
+
 from logger_config import ModelLogger, PredictionLogger, AnalyticsLogger
 
 app = Flask(__name__)
 
-# Load model at startup
-MODEL_PATH = Path("models/best.joblib")
+# Load model at startup - Using clean model without overfitting
+MODEL_PATH = Path("models/best_clean.joblib")
 METADATA_PATH = Path("model_metadata.json")
 model_data = None
 model_metadata = None

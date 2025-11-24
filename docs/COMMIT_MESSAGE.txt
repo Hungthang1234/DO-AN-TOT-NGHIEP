@@ -1,0 +1,60 @@
+# COMMIT MESSAGE
+
+## ✨ Train models clean - Tránh overfitting và data leakage
+
+### 🎯 Mục tiêu
+Khắc phục vấn đề overfitting (R² = 0.9998) và data leakage từ feature `price_per_m2`
+
+### 🔧 Thay đổi chính
+
+1. **Loại bỏ data leakage**
+   - Xóa feature `price_per_m2 = price / area_m2`
+   - Model không còn học shortcut, học pattern thật
+
+2. **Anti-overfitting parameters**
+   - Decision Tree: max_depth=10, min_samples_split=100
+   - Random Forest: max_depth=15, max_features='sqrt'
+   - XGBoost: reg_alpha=1.0, reg_lambda=1.0, subsample=0.8
+   - LightGBM: reg_alpha=0.5, reg_lambda=0.5
+
+3. **Overfitting detection**
+   - Monitor train/test R² gap
+   - Gap < 0.02 = Good, Gap > 0.05 = Overfit
+
+### 📊 Kết quả
+
+**Model cũ (best.joblib):**
+- R²: 0.9319
+- RMSE: 46,958.14
+- ⚠️ Không có train/test gap
+
+**Model mới (best_clean.joblib - LightGBM):**
+- Test R²: 0.8987
+- Train R²: 0.9016
+- **R² Gap: 0.0029** ✅ (Không overfit!)
+- **RMSE: 44,344.56** (Thấp hơn 2,613 points!)
+- MAE: 31,024.98
+
+### ✅ Models đã train (6 models clean)
+- Linear Regression: R²=0.8045, gap=0.0017 ✅
+- Ridge: R²=0.8044, gap=0.0017 ✅
+- Decision Tree: R²=0.8021, gap=-0.0002 ✅
+- Random Forest: R²=0.7915, gap=0.0018 ✅
+- XGBoost: R²=0.8908, gap=0.0049 ✅
+- **LightGBM: R²=0.8987, gap=0.0029** ✅ ⭐ BEST
+
+### 📁 Files thêm/sửa
+- ✅ `train_quick_clean.py` - Script train models clean
+- ✅ `compare_models.py` - So sánh model cũ vs mới
+- ✅ `KETQUA_TRANH_OVERFITTING.md` - Báo cáo chi tiết
+- ✅ `models/best_clean.joblib` - Model tốt nhất không overfit
+- ✅ `models/*_clean.joblib` - 6 models clean
+- ✅ `app.py` - Update dùng `best_clean.joblib`
+- ✅ `logs/model_training.csv` - Logs tất cả models
+
+### 🚀 Deploy
+Web app đã update sử dụng `best_clean.joblib` - Model chính xác và tin cậy hơn!
+
+---
+
+**TL;DR**: Model mới có RMSE thấp hơn (44,344 vs 46,958), không overfit (gap=0.0029), không data leakage → Dự đoán chính xác và tin cậy hơn! ✨

@@ -8,11 +8,15 @@ import json
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
+import sys
+
+# Get project root (2 levels up from scripts/utils)
+PROJECT_ROOT = Path(__file__).parent.parent.parent
 
 def export_all_models_info(output_file='model_metrics_report.json'):
     """Export all model information to JSON file"""
     
-    models_dir = Path('models')
+    models_dir = PROJECT_ROOT / 'models'
     report = {
         'generated_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
         'models': [],
@@ -81,7 +85,7 @@ def export_all_models_info(output_file='model_metrics_report.json'):
         }
     
     # Save report
-    output_path = Path(output_file)
+    output_path = PROJECT_ROOT / output_file
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(report, f, indent=2, ensure_ascii=False)
     
@@ -103,7 +107,7 @@ def export_all_models_info(output_file='model_metrics_report.json'):
 
 def print_model_comparison():
     """Print a comparison table of all models"""
-    models_dir = Path('models')
+    models_dir = PROJECT_ROOT / 'models'
     
     if not models_dir.exists():
         print("❌ Models directory not found")
@@ -209,7 +213,7 @@ def create_quick_reference():
     output.append("="*70)
     
     # Save to file
-    with open('MODEL_REFERENCE.txt', 'w', encoding='utf-8') as f:
+    with open(PROJECT_ROOT / 'docs' / reference_file, 'w', encoding='utf-8') as f:
         f.write('\n'.join(output))
     
     print("✓ Quick reference saved to MODEL_REFERENCE.txt")
