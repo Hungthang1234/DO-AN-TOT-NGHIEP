@@ -5,3 +5,8 @@ joblib
 xgboost
 lightgbm
 flask
+flask-cors
+catboost
+shap
+geopy
+matplotlib

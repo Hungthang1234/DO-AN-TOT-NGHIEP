@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Testing Page</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #4CAF50;
+            margin-top: 0;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            background: #f9f9f9;
+            padding: 15px;
+            margin-top: 10px;
+            border-left: 4px solid #4CAF50;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            border-left-color: #f44336;
+            color: #d32f2f;
+        }
+        .success {
+            border-left-color: #4CAF50;
+        }
+        .loading {
+            color: #2196F3;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        .status-success { background: #4CAF50; color: white; }
+        .status-error { background: #f44336; color: white; }
+        .status-pending { background: #FFC107; color: black; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Enhancement APIs Testing Page</h1>
+    <p>Test all new enhancement endpoints. Server must be running on <code>http://localhost:5000</code></p>
+
+    <!-- Test 0: Health Check -->
+    <div class="test-section">
+        <h2>Test 0: Health Check</h2>
+        <button onclick="testHealth()">Test Health</button>
+        <span id="health-status" class="status-badge status-pending">Pending</span>
+        <div id="health-result" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- Test 1: Predict Trend -->
+    <div class="test-section">
+        <h2>Test 1: Predict Trend (5 years)</h2>
+        <button onclick="testPredictTrend()">Test Predict Trend</button>
+        <span id="trend-status" class="status-badge status-pending">Pending</span>
+        <div id="trend-result" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- Test 2: Compare Areas -->
+    <div class="test-section">
+        <h2>Test 2: Compare Areas (3 cities)</h2>
+        <button onclick="testCompareAreas()">Test Compare Areas</button>
+        <span id="compare-status" class="status-badge status-pending">Pending</span>
+        <div id="compare-result" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- Test 3: Calculate ROI -->
+    <div class="test-section">
+        <h2>Test 3: Calculate ROI (5 year investment)</h2>
+        <button onclick="testCalculateROI()">Test Calculate ROI</button>
+        <span id="roi-status" class="status-badge status-pending">Pending</span>
+        <div id="roi-result" class="result" style="display:none;"></div>
+    </div>
+
+    <!-- Test All Button -->
+    <div class="test-section">
+        <h2>Run All Tests</h2>
+        <button onclick="runAllTests()" style="background: #2196F3;">Run All Tests</button>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+
+        async function testHealth() {
+            const btn = event.target;
+            btn.disabled = true;
+            document.getElementById('health-result').style.display = 'block';
+            document.getElementById('health-result').textContent = '⏳ Loading...';
+            document.getElementById('health-result').className = 'result loading';
+
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                const data = await response.json();
+                
+                document.getElementById('health-result').textContent = JSON.stringify(data, null, 2);
+                document.getElementById('health-result').className = 'result success';
+                document.getElementById('health-status').textContent = 'Passed';
+                document.getElementById('health-status').className = 'status-badge status-success';
+            } catch (error) {
+                document.getElementById('health-result').textContent = `Error: ${error.message}`;
+                document.getElementById('health-result').className = 'result error';
+                document.getElementById('health-status').textContent = 'Failed';
+                document.getElementById('health-status').className = 'status-badge status-error';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function testPredictTrend() {
+            const btn = event.target;
+            btn.disabled = true;
+            document.getElementById('trend-result').style.display = 'block';
+            document.getElementById('trend-result').textContent = '⏳ Loading...';
+            document.getElementById('trend-result').className = 'result loading';
+
+            try {
+                const payload = {
+                    country: "Vietnam",
+                    city: "Ho Chi Minh City",
+                    area_m2: 100,
+                    property_type: "Apartment",
+                    start_year: 2024,
+                    years_ahead: 5
+                };
+
+                const response = await fetch(`${API_BASE}/predict_trend`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                document.getElementById('trend-result').textContent = JSON.stringify(data, null, 2);
+                document.getElementById('trend-result').className = 'result success';
+                document.getElementById('trend-status').textContent = 'Passed';
+                document.getElementById('trend-status').className = 'status-badge status-success';
+            } catch (error) {
+                document.getElementById('trend-result').textContent = `Error: ${error.message}`;
+                document.getElementById('trend-result').className = 'result error';
+                document.getElementById('trend-status').textContent = 'Failed';
+                document.getElementById('trend-status').className = 'status-badge status-error';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function testCompareAreas() {
+            const btn = event.target;
+            btn.disabled = true;
+            document.getElementById('compare-result').style.display = 'block';
+            document.getElementById('compare-result').textContent = '⏳ Loading...';
+            document.getElementById('compare-result').className = 'result loading';
+
+            try {
+                const payload = {
+                    base_features: {
+                        country: "Vietnam",
+                        area_m2: 100,
+                        property_type: "Apartment",
+                        year: 2024
+                    },
+                    cities: ["Ho Chi Minh City", "Hanoi", "Da Nang"]
+                };
+
+                const response = await fetch(`${API_BASE}/compare_areas`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                document.getElementById('compare-result').textContent = JSON.stringify(data, null, 2);
+                document.getElementById('compare-result').className = 'result success';
+                document.getElementById('compare-status').textContent = 'Passed';
+                document.getElementById('compare-status').className = 'status-badge status-success';
+            } catch (error) {
+                document.getElementById('compare-result').textContent = `Error: ${error.message}`;
+                document.getElementById('compare-result').className = 'result error';
+                document.getElementById('compare-status').textContent = 'Failed';
+                document.getElementById('compare-status').className = 'status-badge status-error';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function testCalculateROI() {
+            const btn = event.target;
+            btn.disabled = true;
+            document.getElementById('roi-result').style.display = 'block';
+            document.getElementById('roi-result').textContent = '⏳ Loading...';
+            document.getElementById('roi-result').className = 'result loading';
+
+            try {
+                const payload = {
+                    purchase_price: 500000,
+                    purchase_year: 2024,
+                    sell_year: 2029,
+                    features: {
+                        country: "Vietnam",
+                        city: "Ho Chi Minh City",
+                        area_m2: 100,
+                        property_type: "Apartment"
+                    },
+                    additional_costs: 50000,
+                    rental_income_per_year: 30000
+                };
+
+                const response = await fetch(`${API_BASE}/calculate_roi`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                
+                const data = await response.json();
+                document.getElementById('roi-result').textContent = JSON.stringify(data, null, 2);
+                document.getElementById('roi-result').className = 'result success';
+                document.getElementById('roi-status').textContent = 'Passed';
+                document.getElementById('roi-status').className = 'status-badge status-success';
+            } catch (error) {
+                document.getElementById('roi-result').textContent = `Error: ${error.message}`;
+                document.getElementById('roi-result').className = 'result error';
+                document.getElementById('roi-status').textContent = 'Failed';
+                document.getElementById('roi-status').className = 'status-badge status-error';
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function runAllTests() {
+            await testHealth();
+            await new Promise(r => setTimeout(r, 1000));
+            await testPredictTrend();
+            await new Promise(r => setTimeout(r, 1000));
+            await testCompareAreas();
+            await new Promise(r => setTimeout(r, 1000));
+            await testCalculateROI();
+        }
+    </script>
+</body>
+</html>

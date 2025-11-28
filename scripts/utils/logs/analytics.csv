@@ -1,0 +1,6 @@
+timestamp,filters,record_count,response_time_ms
+2025-11-25 02:42:16,"{""countries"": [], ""year_from"": null, ""year_to"": null, ""property_types"": [], ""price_min"": null, ""price_max"": null}",15000,99.65920448303224
+2025-11-27 02:34:01,"{""countries"": [], ""year_from"": null, ""year_to"": null, ""property_types"": [], ""price_min"": null, ""price_max"": null}",15000,126.3115406036377
+2025-11-27 02:34:12,"{""countries"": [], ""year_from"": null, ""year_to"": null, ""property_types"": [], ""price_min"": null, ""price_max"": null}",15000,100.79789161682127
+2025-11-27 02:36:51,"{""countries"": [], ""year_from"": null, ""year_to"": null, ""property_types"": [], ""price_min"": null, ""price_max"": null}",15000,51.12695693969727
+2025-11-27 02:44:50,"{""countries"": [], ""year_from"": null, ""year_to"": null, ""property_types"": [], ""price_min"": null, ""price_max"": null}",15000,91.28022193908691

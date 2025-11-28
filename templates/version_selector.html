@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chọn Phiên Bản - House Price Prediction</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.95;
+        }
+
+        .version-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .version-card {
+            background: white;
+            border-radius: 20px;
+            padding: 2.5rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .version-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .version-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .version-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .version-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .badge-legacy {
+            background: #FFA726;
+            color: white;
+        }
+
+        .badge-new {
+            background: #66BB6A;
+            color: white;
+        }
+
+        .version-card h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #2c3e50;
+        }
+
+        .version-card .description {
+            color: #7f8c8d;
+            line-height: 1.8;
+            margin-bottom: 1.5rem;
+            font-size: 1.05rem;
+        }
+
+        .features {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .features li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #ecf0f1;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: #34495e;
+        }
+
+        .features li:last-child {
+            border-bottom: none;
+        }
+
+        .features li i {
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+
+        .feature-tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: #e8eaf6;
+            color: #667eea;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            margin-left: auto;
+            font-weight: 600;
+        }
+
+        .select-button {
+            width: 100%;
+            padding: 1rem 2rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .select-button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .comparison-table {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-top: 2rem;
+        }
+
+        .comparison-table h3 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .comparison-header {
+            font-weight: 700;
+            color: #667eea;
+            padding: 1rem;
+            text-align: center;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .comparison-row {
+            display: contents;
+        }
+
+        .comparison-cell {
+            padding: 1rem;
+            text-align: center;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .comparison-cell:first-child {
+            text-align: left;
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        .check {
+            color: #66BB6A;
+            font-size: 1.5rem;
+        }
+
+        .cross {
+            color: #EF5350;
+            font-size: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .version-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .comparison-cell {
+                text-align: left !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-home"></i> House Price Prediction</h1>
+            <p>Chọn phiên bản phù hợp với nhu cầu của bạn</p>
+        </div>
+
+        <div class="version-cards">
+            <!-- Legacy Version -->
+            <div class="version-card" onclick="selectVersion('legacy')">
+                <span class="version-badge badge-legacy">DATASET CŨ</span>
+                <h2><i class="fas fa-database"></i> Legacy Version</h2>
+                <p class="description">
+                    Sử dụng dataset cũ với các features chi tiết về phòng ngủ, phòng tắm, năm xây dựng và tầng. 
+                    Phù hợp cho dự đoán chi tiết với nhiều thông tin.
+                </p>
+
+                <ul class="features">
+                    <li>
+                        <i class="fas fa-bed"></i>
+                        <span>Bedrooms & Bathrooms</span>
+                        <span class="feature-tag">Chi tiết</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-calendar"></i>
+                        <span>Year Built</span>
+                        <span class="feature-tag">Tuổi BĐS</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-layer-group"></i>
+                        <span>Floor Level</span>
+                        <span class="feature-tag">Tầng lầu</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-city"></i>
+                        <span>District Details</span>
+                        <span class="feature-tag">Quận/Huyện</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-chart-line"></i>
+                        <span>Backup Available</span>
+                        <span class="feature-tag">An toàn</span>
+                    </li>
+                </ul>
+
+                <button class="select-button">
+                    <i class="fas fa-arrow-right"></i>
+                    Chọn Legacy Version
+                </button>
+            </div>
+
+            <!-- API Version -->
+            <div class="version-card" onclick="selectVersion('api')">
+                <span class="version-badge badge-new">MỚI - API</span>
+                <h2><i class="fas fa-cloud"></i> API Version</h2>
+                <p class="description">
+                    Sử dụng API mới với Singapore HDB classification system. Dataset lớn hơn (978K records) 
+                    với property_type thay vì bedrooms.
+                </p>
+
+                <ul class="features">
+                    <li>
+                        <i class="fas fa-building"></i>
+                        <span>Property Type</span>
+                        <span class="feature-tag">HDB System</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-ruler-combined"></i>
+                        <span>Area Only</span>
+                        <span class="feature-tag">Đơn giản</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-globe-asia"></i>
+                        <span>Multi-Country</span>
+                        <span class="feature-tag">Toàn cầu</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-database"></i>
+                        <span>978K Records</span>
+                        <span class="feature-tag">Big Data</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-rocket"></i>
+                        <span>Enhanced APIs</span>
+                        <span class="feature-tag">Trend/ROI</span>
+                    </li>
+                </ul>
+
+                <button class="select-button">
+                    <i class="fas fa-arrow-right"></i>
+                    Chọn API Version
+                </button>
+            </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="comparison-table">
+            <h3><i class="fas fa-balance-scale"></i> So Sánh Chi Tiết</h3>
+            <div class="comparison-grid">
+                <div class="comparison-header">Tính năng</div>
+                <div class="comparison-header">Legacy</div>
+                <div class="comparison-header">API</div>
+
+                <div class="comparison-row">
+                    <div class="comparison-cell">Bedrooms/Bathrooms</div>
+                    <div class="comparison-cell"><i class="fas fa-check check"></i></div>
+                    <div class="comparison-cell"><i class="fas fa-times cross"></i></div>
+                </div>
+
+                <div class="comparison-row">
+                    <div class="comparison-cell">Property Type (HDB)</div>
+                    <div class="comparison-cell"><i class="fas fa-times cross"></i></div>
+                    <div class="comparison-cell"><i class="fas fa-check check"></i></div>
+                </div>
+
+                <div class="comparison-row">
+                    <div class="comparison-cell">Dataset Size</div>
+                    <div class="comparison-cell">~19K</div>
+                    <div class="comparison-cell">978K</div>
+                </div>
+
+                <div class="comparison-row">
+                    <div class="comparison-cell">Countries</div>
+                    <div class="comparison-cell">1</div>
+                    <div class="comparison-cell">10+</div>
+                </div>
+
+                <div class="comparison-row">
+                    <div class="comparison-cell">Trend Prediction</div>
+                    <div class="comparison-cell"><i class="fas fa-times cross"></i></div>
+                    <div class="comparison-cell"><i class="fas fa-check check"></i></div>
+                </div>
+
+                <div class="comparison-row">
+                    <div class="comparison-cell">ROI Calculator</div>
+                    <div class="comparison-cell"><i class="fas fa-times cross"></i></div>
+                    <div class="comparison-cell"><i class="fas fa-check check"></i></div>
+                </div>
+
+                <div class="comparison-row">
+                    <div class="comparison-cell">SHAP Explainer</div>
+                    <div class="comparison-cell"><i class="fas fa-times cross"></i></div>
+                    <div class="comparison-cell"><i class="fas fa-check check"></i></div>
+                </div>
+
+                <div class="comparison-row">
+                    <div class="comparison-cell">Backup</div>
+                    <div class="comparison-cell"><i class="fas fa-check check"></i></div>
+                    <div class="comparison-cell"><i class="fas fa-check check"></i></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function selectVersion(version) {
+            if (version === 'legacy') {
+                window.location.href = '/legacy';
+            } else if (version === 'api') {
+                window.location.href = '/';
+            }
+        }
+    </script>
+</body>
+</html>

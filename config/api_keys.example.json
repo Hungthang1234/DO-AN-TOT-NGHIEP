@@ -1,0 +1,18 @@
+{
+  "comment": "Copy this file to api_keys.json and add your API keys",
+  "rapidapi": {
+    "key": "YOUR_RAPIDAPI_KEY_HERE",
+    "zillow_host": "zillow-com1.p.rapidapi.com",
+    "realty_mole_host": "realty-mole-property-api.p.rapidapi.com"
+  },
+  "zoopla": {
+    "api_key": "YOUR_ZOOPLA_API_KEY_HERE"
+  },
+  "domain_au": {
+    "bearer_token": "YOUR_DOMAIN_BEARER_TOKEN_HERE"
+  },
+  "singapore": {
+    "comment": "No API key needed for data.gov.sg",
+    "base_url": "https://data.gov.sg/api/action/datastore_search"
+  }
+}

@@ -1,0 +1,280 @@
+@echo off
+chcp 65001 >nul
+title House Price Prediction - Main Launcher
+color 0B
+
+:menu
+cls
+echo.
+echo ╔═══════════════════════════════════════════════════════════════╗
+echo ║         🏠 HOUSE PRICE PREDICTION - MAIN LAUNCHER            ║
+echo ╚═══════════════════════════════════════════════════════════════╝
+echo.
+echo  Chọn phiên bản bạn muốn sử dụng:
+echo.
+echo  ┌─────────────────────────────────────────────────────────────┐
+echo  │  [1] 🔵 LEGACY VERSION - Dataset Cũ                         │
+echo  │      • Bedrooms, Bathrooms, Year Built, Floor Level         │
+echo  │      • ~19,000 records                                      │
+echo  │      • Chi tiết, đầy đủ features                            │
+echo  │      • Backup an toàn                                       │
+echo  └─────────────────────────────────────────────────────────────┘
+echo.
+echo  ┌─────────────────────────────────────────────────────────────┐
+echo  │  [2] 🟢 EXTERNAL API VERSION - Dữ liệu từ APIs bên ngoài   │
+echo  │      • Singapore HDB API (FREE - data.gov.sg)               │
+echo  │      • Real-time data fetching                              │
+echo  │      • KHÔNG dùng dataset local                             │
+echo  │      • Multi-country support                                │
+echo  └─────────────────────────────────────────────────────────────┘
+echo.
+echo  ┌─────────────────────────────────────────────────────────────┐
+echo  │  [3] 🎯 VERSION SELECTOR - Chọn từ Web                      │
+echo  │      • Mở landing page để chọn version                      │
+echo  └─────────────────────────────────────────────────────────────┘
+echo.
+echo  ┌─────────────────────────────────────────────────────────────┐
+echo  │  [4] 📊 ENHANCEMENT TEST PAGE                               │
+echo  │      • Test Enhanced APIs (Trend, Compare, ROI, SHAP)       │
+echo  │      • API Version only                                     │
+echo  └─────────────────────────────────────────────────────────────┘
+echo.
+echo  ┌─────────────────────────────────────────────────────────────┐
+echo  │  [5] 📚 VIEW DOCUMENTATION                                  │
+echo  │      • Xem hướng dẫn sử dụng                                │
+echo  └─────────────────────────────────────────────────────────────┘
+echo.
+echo  ┌─────────────────────────────────────────────────────────────┐
+echo  │  [6] 🔧 TRAIN NEW MODEL - External APIs                     │
+echo  │      • Fetch data từ APIs bên ngoài                         │
+echo  │      • Train model mới với data đó                          │
+echo  └─────────────────────────────────────────────────────────────┘
+echo.
+echo  ┌─────────────────────────────────────────────────────────────┐
+echo  │  [7] 🔄 SWITCH MODEL                                        │
+echo  │      • Chuyển đổi giữa các models                           │
+echo  └─────────────────────────────────────────────────────────────┘
+echo.
+echo  ┌─────────────────────────────────────────────────────────────┐
+echo  │  [8] 👨‍💼 ADMIN DASHBOARD                                      │
+echo  │      • Quản lý models qua web interface                     │
+echo  └─────────────────────────────────────────────────────────────┘
+echo.
+echo  ┌─────────────────────────────────────────────────────────────┐
+echo  │  [9] 📊 DATASET VERSION - Singapore HDB Dataset             │
+echo  │      • Property Type system                                 │
+echo  │      • 978,000 records (Big Data)                           │
+echo  │      • Enhanced APIs (Trend, ROI, SHAP)                     │
+echo  └─────────────────────────────────────────────────────────────┘
+echo.
+echo  [0] ❌ Thoát
+echo.
+echo ═══════════════════════════════════════════════════════════════
+echo.
+
+set /p choice="  Nhập lựa chọn của bạn (0-9): "
+
+if "%choice%"=="1" goto legacy
+if "%choice%"=="2" goto api
+if "%choice%"=="3" goto selector
+if "%choice%"=="4" goto enhancement_test
+if "%choice%"=="5" goto docs
+if "%choice%"=="6" goto train_model
+if "%choice%"=="7" goto switch_model
+if "%choice%"=="8" goto admin_dashboard
+if "%choice%"=="9" goto external_api
+if "%choice%"=="0" goto exit
+echo.
+echo  ⚠️  Lựa chọn không hợp lệ! Vui lòng chọn 0-9.
+timeout /t 2 >nul
+goto menu
+
+:legacy
+cls
+echo.
+echo ═══════════════════════════════════════════════════════════════
+echo  🔵 LEGACY VERSION
+echo ═══════════════════════════════════════════════════════════════
+echo.
+echo  Đang khởi động server với Legacy Version...
+echo  • Dataset: Cũ (bedrooms, bathrooms, year_built, floor_level)
+echo  • URL: http://localhost:5000/legacy
+echo.
+echo  ⏳ Vui lòng đợi server khởi động...
+echo.
+
+timeout /t 2 >nul
+start "" http://localhost:5000/legacy
+"%CD%\.venv\Scripts\python.exe" app.py
+goto end
+
+:api
+cls
+echo.
+echo ═══════════════════════════════════════════════════════════════
+echo  🟢 EXTERNAL API VERSION
+echo ═══════════════════════════════════════════════════════════════
+echo.
+echo  Đang khởi động server với External API Mode...
+echo  • Data source: Singapore HDB API (FREE - data.gov.sg)
+echo  • URL: http://localhost:5000/external_api
+echo  • KHÔNG dùng dataset local
+echo.
+echo  ⏳ Vui lòng đợi server khởi động...
+echo.
+
+timeout /t 2 >nul
+start "" http://localhost:5000/external_api
+"%CD%\.venv\Scripts\python.exe" app.py
+goto end
+
+:selector
+cls
+echo.
+echo ═══════════════════════════════════════════════════════════════
+echo  🎯 VERSION SELECTOR
+echo ═══════════════════════════════════════════════════════════════
+echo.
+echo  Đang khởi động server với Landing Page...
+echo  • URL: http://localhost:5000/select
+echo  • Bạn có thể chọn version từ web browser
+echo.
+echo  ⏳ Vui lòng đợi server khởi động...
+echo.
+
+timeout /t 2 >nul
+start "" http://localhost:5000/select
+"%CD%\.venv\Scripts\python.exe" app.py
+goto end
+
+:enhancement_test
+cls
+echo.
+echo ═══════════════════════════════════════════════════════════════
+echo  📊 ENHANCEMENT TEST PAGE
+echo ═══════════════════════════════════════════════════════════════
+echo.
+echo  Đang khởi động server và mở Test Page...
+echo  • Server: http://localhost:5000/
+echo  • Test Page: enhancements/test_page.html
+echo.
+echo  Test các APIs:
+echo   ✓ Trend Prediction
+echo   ✓ Compare Areas
+echo   ✓ ROI Calculator
+echo   ✓ SHAP Explainer
+echo.
+echo  ⏳ Vui lòng đợi server khởi động...
+echo.
+
+timeout /t 2 >nul
+start "" http://localhost:5000/
+timeout /t 3 >nul
+start "" "%CD%\enhancements\test_page.html"
+"%CD%\.venv\Scripts\python.exe" app.py
+goto end
+
+:docs
+cls
+echo.
+echo ═══════════════════════════════════════════════════════════════
+echo  📚 DOCUMENTATION
+echo ═══════════════════════════════════════════════════════════════
+echo.
+echo  Chọn tài liệu bạn muốn xem:
+echo.
+echo  [1] QUICK_START.md           - Hướng dẫn khởi động nhanh
+echo  [2] DUAL_VERSION_GUIDE.md    - Hướng dẫn 2 phiên bản
+echo  [3] BAT_FILES_GUIDE.md       - Hướng dẫn file .bat
+echo  [4] WEEK1_COMPLETE.md        - Tính năng Week 1
+echo  [5] ANALYSIS_PROPERTY_TYPE   - Phân tích Property Type
+echo  [6] EXTERNAL_API_GUIDE.md    - External APIs & Training
+echo  [7] API_GUIDE.md             - API Documentation
+echo  [0] Quay lại menu chính
+echo.
+echo ═══════════════════════════════════════════════════════════════
+echo.
+
+set /p doc_choice="  Nhập lựa chọn (0-7): "
+
+if "%doc_choice%"=="1" start "" notepad.exe QUICK_START.md
+if "%doc_choice%"=="2" start "" notepad.exe docs\DUAL_VERSION_GUIDE.md
+if "%doc_choice%"=="3" start "" notepad.exe docs\BAT_FILES_GUIDE.md
+if "%doc_choice%"=="4" start "" notepad.exe enhancements\WEEK1_COMPLETE.md
+if "%doc_choice%"=="5" start "" notepad.exe enhancements\ANALYSIS_PROPERTY_TYPE_ISSUE.md
+if "%doc_choice%"=="6" start "" notepad.exe docs\EXTERNAL_API_GUIDE.md
+if "%doc_choice%"=="7" start "" notepad.exe enhancements\API_GUIDE.md
+if "%doc_choice%"=="0" goto menu
+
+echo.
+echo  ✅ Đã mở tài liệu trong Notepad
+timeout /t 2 >nul
+goto docs
+
+:train_model
+call launchers\TRAIN_MODEL.bat
+goto menu
+
+:switch_model
+call launchers\SWITCH_MODEL.bat
+goto menu
+
+:admin_dashboard
+cls
+echo.
+echo ═══════════════════════════════════════════════════════════════
+echo  👨‍💼 ADMIN DASHBOARD
+echo ═══════════════════════════════════════════════════════════════
+echo.
+echo  Đang khởi động server và Admin Dashboard...
+echo  • URL: http://localhost:5000/admin/models
+echo.
+echo  Features:
+echo   ✓ View all models
+echo   ✓ Compare performance
+echo   ✓ Switch active model
+echo   ✓ Train new model
+echo   ✓ Fetch external data
+echo.
+echo  ⏳ Vui lòng đợi server khởi động...
+echo.
+
+timeout /t 2 >nul
+start "" http://localhost:5000/admin/models
+"%CD%\.venv\Scripts\python.exe" app.py
+goto end
+
+:external_api
+cls
+echo.
+echo ═══════════════════════════════════════════════════════════════
+echo  📊 DATASET VERSION - Singapore HDB
+echo ═══════════════════════════════════════════════════════════════
+echo.
+echo  Đang khởi động server với Dataset Version...
+echo  • Dataset: Singapore HDB (property_type, 978K records)
+echo  • URL: http://localhost:5000/
+echo  • Enhanced APIs: Trend, ROI, SHAP, Compare
+echo.
+echo  ⏳ Vui lòng đợi server khởi động...
+echo.
+
+call launchers\start_dataset.bat
+goto menu
+
+:exit
+cls
+echo.
+echo  👋 Tạm biệt! Cảm ơn bạn đã sử dụng House Price Prediction.
+echo.
+timeout /t 2 >nul
+exit
+
+:end
+echo.
+echo.
+echo ═══════════════════════════════════════════════════════════════
+echo  Server đã dừng.
+echo ═══════════════════════════════════════════════════════════════
+echo.
+goto menu

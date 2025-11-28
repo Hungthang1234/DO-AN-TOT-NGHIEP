@@ -2,6 +2,7 @@
 Flask web application for house price prediction
 """
 from flask import Flask, render_template, request, jsonify
+from flask_cors import CORS
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -20,9 +21,47 @@ from logger_config import ModelLogger, PredictionLogger, AnalyticsLogger
 
 app = Flask(__name__)
 
+# Enable CORS for all routes
+CORS(app)
+
+# Register enhancement APIs
+try:
+    sys.path.insert(0, str(Path(__file__).parent / 'enhancements'))
+    from api.endpoints import api_bp
+    app.register_blueprint(api_bp)
+    print("✓ Enhancement APIs registered successfully")
+except Exception as e:
+    print(f"⚠ Could not load enhancement APIs: {e}")
+
+# Register admin routes
+try:
+    from enhancements.admin_routes import admin_bp
+    app.register_blueprint(admin_bp)
+    print("✓ Admin routes registered successfully")
+except Exception as e:
+    print(f"⚠ Could not load admin routes: {e}")
+
+# Initialize External API Predictor
+try:
+    sys.path.insert(0, str(Path(__file__).parent / 'scripts'))
+    from external_api_predictor import ExternalAPIPredictor
+    external_predictor = ExternalAPIPredictor()
+    print("✓ External API Predictor initialized")
+except Exception as e:
+    external_predictor = None
+    print(f"⚠ Could not load External API Predictor: {e}")
+
+# Register Advanced Charts API
+try:
+    from enhancements.advanced_charts_api import advanced_charts_bp
+    app.register_blueprint(advanced_charts_bp)
+    print("✓ Advanced Charts API registered successfully")
+except Exception as e:
+    print(f"⚠ Could not load Advanced Charts API: {e}")
+
 # Load model at startup - Using clean model without overfitting
 MODEL_PATH = Path("models/best_clean.joblib")
-METADATA_PATH = Path("model_metadata.json")
+METADATA_PATH = Path("config/model_metadata.json")
 model_data = None
 model_metadata = None
 
@@ -109,27 +148,91 @@ load_model()
 CITY_CACHE = {}
 
 def load_cities_data():
-    """Load and cache city data from CSV"""
+    """Load and cache city data from CSV + Extended country support"""
     global CITY_CACHE
+    
+    # Extended country-city mapping for 10+ countries
+    EXTENDED_CITIES = {
+        'Singapore': ['ANG MO KIO', 'BEDOK', 'BISHAN', 'BUKIT BATOK', 'BUKIT MERAH', 
+                      'BUKIT PANJANG', 'BUKIT TIMAH', 'CENTRAL AREA', 'CHOA CHU KANG',
+                      'CLEMENTI', 'GEYLANG', 'HOUGANG', 'JURONG EAST', 'JURONG WEST',
+                      'KALLANG/WHAMPOA', 'MARINE PARADE', 'PASIR RIS', 'PUNGGOL',
+                      'QUEENSTOWN', 'SEMBAWANG', 'SENGKANG', 'SERANGOON', 'TAMPINES',
+                      'TOA PAYOH', 'WOODLANDS', 'YISHUN'],
+        'USA': ['New York', 'Los Angeles', 'Chicago', 'Houston', 'Phoenix', 
+                'Philadelphia', 'San Antonio', 'San Diego', 'Dallas', 'San Jose',
+                'Austin', 'Jacksonville', 'Fort Worth', 'Columbus', 'San Francisco',
+                'Charlotte', 'Indianapolis', 'Seattle', 'Denver', 'Boston',
+                'Washington DC', 'Nashville', 'Las Vegas', 'Portland', 'Miami'],
+        'Australia': ['Sydney', 'Melbourne', 'Brisbane', 'Perth', 'Adelaide',
+                      'Gold Coast', 'Newcastle', 'Canberra', 'Sunshine Coast',
+                      'Wollongong', 'Hobart', 'Geelong', 'Townsville', 'Cairns',
+                      'Darwin', 'Toowoomba', 'Ballarat', 'Bendigo', 'Launceston'],
+        'UK': ['London', 'Birmingham', 'Manchester', 'Leeds', 'Liverpool',
+               'Sheffield', 'Bristol', 'Newcastle', 'Nottingham', 'Leicester',
+               'Coventry', 'Bradford', 'Edinburgh', 'Cardiff', 'Belfast',
+               'Glasgow', 'Southampton', 'Portsmouth', 'Brighton', 'Oxford'],
+        'Canada': ['Toronto', 'Montreal', 'Vancouver', 'Calgary', 'Edmonton',
+                   'Ottawa', 'Winnipeg', 'Quebec City', 'Hamilton', 'Kitchener',
+                   'London', 'Victoria', 'Halifax', 'Oshawa', 'Windsor',
+                   'Saskatoon', 'Regina', 'St. John\'s', 'Kelowna', 'Barrie'],
+        'Germany': ['Berlin', 'Hamburg', 'Munich', 'Cologne', 'Frankfurt',
+                    'Stuttgart', 'Dusseldorf', 'Dortmund', 'Essen', 'Leipzig',
+                    'Bremen', 'Dresden', 'Hanover', 'Nuremberg', 'Duisburg',
+                    'Bochum', 'Wuppertal', 'Bonn', 'Bielefeld', 'Mannheim'],
+        'France': ['Paris', 'Marseille', 'Lyon', 'Toulouse', 'Nice',
+                   'Nantes', 'Strasbourg', 'Montpellier', 'Bordeaux', 'Lille',
+                   'Rennes', 'Reims', 'Le Havre', 'Saint-Étienne', 'Toulon',
+                   'Grenoble', 'Dijon', 'Angers', 'Nîmes', 'Villeurbanne'],
+        'Japan': ['Tokyo', 'Yokohama', 'Osaka', 'Nagoya', 'Sapporo',
+                  'Kobe', 'Kyoto', 'Fukuoka', 'Kawasaki', 'Saitama',
+                  'Hiroshima', 'Sendai', 'Chiba', 'Kitakyushu', 'Sakai',
+                  'Niigata', 'Hamamatsu', 'Kumamoto', 'Okayama', 'Shizuoka'],
+        'China': ['Beijing', 'Shanghai', 'Guangzhou', 'Shenzhen', 'Chengdu',
+                  'Hangzhou', 'Wuhan', 'Xi\'an', 'Chongqing', 'Tianjin',
+                  'Nanjing', 'Suzhou', 'Dongguan', 'Shenyang', 'Qingdao',
+                  'Zhengzhou', 'Foshan', 'Jinan', 'Changsha', 'Dalian'],
+        'South Korea': ['Seoul', 'Busan', 'Incheon', 'Daegu', 'Daejeon',
+                        'Gwangju', 'Suwon', 'Ulsan', 'Changwon', 'Seongnam',
+                        'Goyang', 'Yongin', 'Bucheon', 'Ansan', 'Cheongju',
+                        'Jeonju', 'Anyang', 'Pohang', 'Gimhae', 'Jeju'],
+        'India': ['Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai',
+                  'Kolkata', 'Pune', 'Ahmedabad', 'Jaipur', 'Surat',
+                  'Lucknow', 'Kanpur', 'Nagpur', 'Indore', 'Thane',
+                  'Bhopal', 'Visakhapatnam', 'Pimpri-Chinchwad', 'Patna', 'Vadodara'],
+        'UAE': ['Dubai', 'Abu Dhabi', 'Sharjah', 'Ajman', 'Ras Al Khaimah',
+                'Fujairah', 'Umm Al Quwain', 'Al Ain', 'Kalba', 'Khor Fakkan']
+    }
+    
     try:
+        # First try to load from CSV
         data_path = Path("Data/cleaned_real_estate.csv")
-        if not data_path.exists():
-            print("⚠ Data file not found for city lookup")
-            return
+        if data_path.exists():
+            print("Loading city data from CSV...")
+            df = pd.read_csv(data_path, usecols=['country', 'city'])
+            
+            # Load cities from CSV
+            for country in df['country'].unique():
+                cities = df[df['country'] == country]['city'].unique().tolist()
+                cities.sort()
+                CITY_CACHE[country] = cities
+            
+            print(f"✓ Loaded cities for {len(CITY_CACHE)} countries from CSV")
         
-        print("Loading city data...")
-        # Read only necessary columns
-        df = pd.read_csv(data_path, usecols=['country', 'city'])
+        # Merge with extended cities (add countries not in CSV)
+        for country, cities in EXTENDED_CITIES.items():
+            if country not in CITY_CACHE:
+                CITY_CACHE[country] = sorted(cities)
+                print(f"  + Added {country} with {len(cities)} cities")
         
-        # Group by country and get unique cities
-        for country in df['country'].unique():
-            cities = df[df['country'] == country]['city'].unique().tolist()
-            cities.sort()
-            CITY_CACHE[country] = cities
+        print(f"✓ Total: {len(CITY_CACHE)} countries with city data available")
+        print(f"  Countries: {', '.join(sorted(CITY_CACHE.keys()))}")
         
-        print(f"✓ Loaded cities for {len(CITY_CACHE)} countries")
     except Exception as e:
-        print(f"❌ Error loading city data: {e}")
+        # Fallback to extended cities only
+        print(f"⚠ Error loading CSV, using extended cities only: {e}")
+        CITY_CACHE.update(EXTENDED_CITIES)
+        print(f"✓ Loaded {len(CITY_CACHE)} countries from extended database")
 
 # Load cities data at startup
 load_cities_data()
@@ -159,7 +262,7 @@ def get_cities(country):
 
 @app.route('/')
 def home():
-    """Render the main page"""
+    """Render the main page - API Version (New)"""
     feature_names = []
     model_info = {}
     
@@ -176,6 +279,25 @@ def home():
                          feature_names=feature_names,
                          model_info=model_info,
                          model_loaded=model_data is not None)
+
+
+@app.route('/select')
+def version_selector():
+    """Show version selector page"""
+    return render_template('version_selector.html')
+
+
+@app.route('/legacy')
+def legacy_home():
+    """Render legacy version page with old dataset"""
+    return render_template('legacy.html', 
+                         model_loaded=model_data is not None)
+
+
+@app.route('/external_api')
+def external_api_page():
+    """Render External API mode page - No dataset used"""
+    return render_template('external_api_mode.html')
 
 
 @app.route('/predict', methods=['POST'])
@@ -266,6 +388,56 @@ def predict():
         return jsonify({
             'success': False,
             'error': f'Prediction error: {error_msg}'
+        })
+
+
+@app.route('/predict_external_api', methods=['POST'])
+def predict_external_api():
+    """
+    Predict using ONLY external APIs - NO local dataset
+    Supports: Singapore (FREE), USA (API key required)
+    """
+    try:
+        if not external_predictor:
+            return jsonify({
+                'success': False,
+                'error': 'External API Predictor not initialized'
+            })
+        
+        data = request.json
+        country = data.get('country', '').lower()
+        
+        if country == 'singapore':
+            result = external_predictor.predict_singapore_property(
+                town=data.get('town'),
+                flat_type=data.get('flat_type'),
+                floor_area_sqm=data.get('floor_area_sqm'),
+                lease_commence_date=data.get('lease_commence_date'),
+                storey_range=data.get('storey_range', '04 TO 06')
+            )
+        elif country == 'usa':
+            result = external_predictor.predict_usa_property(
+                city=data.get('city'),
+                state=data.get('state'),
+                bedrooms=data.get('bedrooms'),
+                bathrooms=data.get('bathrooms'),
+                living_area_sqft=data.get('living_area_sqft'),
+                lot_size_sqft=data.get('lot_size_sqft'),
+                year_built=data.get('year_built'),
+                api_key=data.get('api_key')
+            )
+        else:
+            result = {
+                'success': False,
+                'error': f'Country {country} not supported for external API predictions'
+            }
+        
+        return jsonify(result)
+        
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'External API prediction error: {str(e)}'
         })
 
 

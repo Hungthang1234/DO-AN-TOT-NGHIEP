@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>External API Predictor - No Dataset Mode</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .header .badge {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            margin: 5px;
+        }
+        
+        .info-box {
+            background: rgba(255,255,255,0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .info-box h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .api-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .api-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102,126,234,0.2);
+        }
+        
+        .api-card.free {
+            border-color: #10b981;
+        }
+        
+        .api-card.paid {
+            border-color: #f59e0b;
+        }
+        
+        .api-status {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .api-status.free {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .api-status.paid {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #374151;
+            font-weight: 500;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        .result-box {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin-top: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: none;
+        }
+        
+        .result-box.success {
+            border-left: 5px solid #10b981;
+        }
+        
+        .result-box.error {
+            border-left: 5px solid #ef4444;
+        }
+        
+        .price-display {
+            font-size: 48px;
+            font-weight: bold;
+            color: #667eea;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .detail-item {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .detail-item strong {
+            display: block;
+            color: #6b7280;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+        
+        .detail-item span {
+            color: #1f2937;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .loading-spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌐 External API Predictor</h1>
+            <p style="color: #6b7280; margin: 10px 0;">Dự đoán giá nhà từ APIs bên ngoài - KHÔNG dùng dataset local</p>
+            <span class="badge">✓ Dataset an toàn</span>
+            <span class="badge">✓ Real-time data</span>
+        </div>
+        
+        <div class="info-box">
+            <h3>📡 Available APIs</h3>
+            
+            <!-- Singapore API -->
+            <div class="api-card free">
+                <h4>
+                    🇸🇬 Singapore HDB API 
+                    <span class="api-status free">FREE</span>
+                </h4>
+                <p style="color: #6b7280; margin: 10px 0;">Data.gov.sg - Không cần API key</p>
+                
+                <form id="singaporeForm">
+                    <div class="form-group">
+                        <label>Town: <span style="color: #6b7280; font-size: 12px;">(26 towns available)</span></label>
+                        <select name="town" required>
+                            <option value="">Chọn Town...</option>
+                            <option value="ANG MO KIO">ANG MO KIO</option>
+                            <option value="BEDOK">BEDOK</option>
+                            <option value="BISHAN">BISHAN</option>
+                            <option value="BUKIT BATOK">BUKIT BATOK</option>
+                            <option value="BUKIT MERAH">BUKIT MERAH</option>
+                            <option value="BUKIT PANJANG">BUKIT PANJANG</option>
+                            <option value="BUKIT TIMAH">BUKIT TIMAH</option>
+                            <option value="CENTRAL AREA">CENTRAL AREA</option>
+                            <option value="CHOA CHU KANG">CHOA CHU KANG</option>
+                            <option value="CLEMENTI">CLEMENTI</option>
+                            <option value="GEYLANG">GEYLANG</option>
+                            <option value="HOUGANG">HOUGANG</option>
+                            <option value="JURONG EAST">JURONG EAST</option>
+                            <option value="JURONG WEST">JURONG WEST</option>
+                            <option value="KALLANG/WHAMPOA">KALLANG/WHAMPOA</option>
+                            <option value="MARINE PARADE">MARINE PARADE</option>
+                            <option value="PASIR RIS">PASIR RIS</option>
+                            <option value="PUNGGOL">PUNGGOL</option>
+                            <option value="QUEENSTOWN">QUEENSTOWN</option>
+                            <option value="SEMBAWANG">SEMBAWANG</option>
+                            <option value="SENGKANG">SENGKANG</option>
+                            <option value="SERANGOON">SERANGOON</option>
+                            <option value="TAMPINES" selected>TAMPINES</option>
+                            <option value="TOA PAYOH">TOA PAYOH</option>
+                            <option value="WOODLANDS">WOODLANDS</option>
+                            <option value="YISHUN">YISHUN</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Flat Type:</label>
+                        <select name="flat_type" required>
+                            <option value="">Chọn loại...</option>
+                            <option value="3 ROOM">3 ROOM</option>
+                            <option value="4 ROOM">4 ROOM</option>
+                            <option value="5 ROOM">5 ROOM</option>
+                            <option value="EXECUTIVE">EXECUTIVE</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Floor Area (sqm): <span style="color: #6b7280; font-size: 12px;">(30-300)</span></label>
+                        <input type="number" name="floor_area_sqm" min="30" max="300" step="0.1" value="90" required>
+                        <small style="color: #6b7280; font-size: 11px;">Typical: 3 ROOM (60-70), 4 ROOM (85-95), 5 ROOM (105-115)</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Lease Commence Year: <span style="color: #6b7280; font-size: 12px;">(1960-2024)</span></label>
+                        <input type="number" name="lease_commence_date" min="1960" max="2024" value="2000" required>
+                        <small style="color: #6b7280; font-size: 11px;">Older properties have lower remaining lease years</small>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Storey Range:</label>
+                        <select name="storey_range" required>
+                            <option value="01 TO 03">01 TO 03</option>
+                            <option value="04 TO 06" selected>04 TO 06</option>
+                            <option value="07 TO 09">07 TO 09</option>
+                            <option value="10 TO 12">10 TO 12</option>
+                            <option value="13 TO 15">13 TO 15</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn">🚀 Predict with Singapore API</button>
+                </form>
+            </div>
+            
+            <!-- USA API -->
+            <div class="api-card paid">
+                <h4>
+                    🇺🇸 USA Zillow API 
+                    <span class="api-status paid">API KEY REQUIRED</span>
+                </h4>
+                <p style="color: #6b7280; margin: 10px 0;">
+                    RapidAPI - 
+                    <a href="https://rapidapi.com/apimaker/api/zillow-com1" target="_blank">Get free trial key</a>
+                </p>
+                <p style="color: #f59e0b; font-size: 14px;">⚠️ Coming soon - Feature đang phát triển</p>
+            </div>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="loading-spinner"></div>
+            <p style="margin-top: 10px; color: white;">Đang fetch data từ API...</p>
+        </div>
+        
+        <div class="result-box" id="resultBox">
+            <h3 id="resultTitle">Prediction Result</h3>
+            <div class="price-display" id="priceDisplay">-</div>
+            
+            <div class="detail-grid" id="detailGrid">
+                <!-- Details will be inserted here -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://localhost:5000';
+        
+        document.getElementById('singaporeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const data = {
+                country: 'singapore',
+                town: formData.get('town'),
+                flat_type: formData.get('flat_type'),
+                floor_area_sqm: parseFloat(formData.get('floor_area_sqm')),
+                lease_commence_date: parseInt(formData.get('lease_commence_date')),
+                storey_range: formData.get('storey_range')
+            };
+            
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('resultBox').style.display = 'none';
+            
+            try {
+                const response = await fetch(`${API_BASE}/predict_external_api`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                // Hide loading
+                document.getElementById('loading').style.display = 'none';
+                
+                // Show result
+                const resultBox = document.getElementById('resultBox');
+                resultBox.style.display = 'block';
+                
+                if (result.success) {
+                    resultBox.className = 'result-box success';
+                    document.getElementById('resultTitle').textContent = '✓ Prediction Successful';
+                    
+                    // Display price with confidence interval
+                    let priceHtml = `SGD $${result.predicted_price.toLocaleString('en-US', {maximumFractionDigits: 0})}`;
+                    if (result.confidence_interval) {
+                        priceHtml += `<div style="font-size: 14px; color: #6b7280; margin-top: 10px;">
+                            Range: $${result.confidence_interval.lower.toLocaleString('en-US', {maximumFractionDigits: 0})} - 
+                            $${result.confidence_interval.upper.toLocaleString('en-US', {maximumFractionDigits: 0})}
+                        </div>`;
+                    }
+                    document.getElementById('priceDisplay').innerHTML = priceHtml;
+                    
+                    // Show details with data quality info
+                    const detailGrid = document.getElementById('detailGrid');
+                    const samplesInfo = result.api_samples;
+                    const marketData = result.market_data;
+                    
+                    detailGrid.innerHTML = `
+                        <div class="detail-item">
+                            <strong>Data Source</strong>
+                            <span>${result.data_source || 'External API'}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>API Samples</strong>
+                            <span>${samplesInfo?.total || 'N/A'} fetched</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Data Cleaned</strong>
+                            <span>${samplesInfo?.after_cleaning || 'N/A'} used (${samplesInfo?.removed_outliers || 0} outliers removed)</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Property Age</strong>
+                            <span>${result.property_details?.property_age || 'N/A'} years (${result.property_details?.remaining_lease || 'N/A'} years lease left)</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Market Avg Price/sqm</strong>
+                            <span>$${(marketData?.avg_price_per_sqm || 0).toFixed(2)}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Price Std Dev</strong>
+                            <span>±$${(marketData?.std_price_per_sqm || 0).toFixed(2)}/sqm</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Market Min Price</strong>
+                            <span>$${(marketData?.min_price || 0).toLocaleString('en-US', {maximumFractionDigits: 0})}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Market Max Price</strong>
+                            <span>$${(marketData?.max_price || 0).toLocaleString('en-US', {maximumFractionDigits: 0})}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Market Median</strong>
+                            <span>$${(marketData?.median_price || 0).toLocaleString('en-US', {maximumFractionDigits: 0})}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Data Quality</strong>
+                            <span style="color: ${result.data_quality ? '#f59e0b' : '#10b981'};">
+                                ${result.data_quality || '✓ Excellent'}
+                            </span>
+                        </div>
+                    `;
+                } else {
+                    resultBox.className = 'result-box error';
+                    document.getElementById('resultTitle').textContent = '✗ Prediction Failed';
+                    document.getElementById('priceDisplay').textContent = 'Error';
+                    document.getElementById('detailGrid').innerHTML = `
+                        <div class="detail-item" style="grid-column: 1/-1;">
+                            <strong>Error Message</strong>
+                            <span style="color: #ef4444;">${result.error}</span>
+                        </div>
+                    `;
+                }
+                
+            } catch (error) {
+                document.getElementById('loading').style.display = 'none';
+                
+                const resultBox = document.getElementById('resultBox');
+                resultBox.style.display = 'block';
+                resultBox.className = 'result-box error';
+                document.getElementById('resultTitle').textContent = '✗ Connection Error';
+                document.getElementById('priceDisplay').textContent = 'Error';
+                document.getElementById('detailGrid').innerHTML = `
+                    <div class="detail-item" style="grid-column: 1/-1;">
+                        <strong>Error Message</strong>
+                        <span style="color: #ef4444;">${error.message}</span>
+                    </div>
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
