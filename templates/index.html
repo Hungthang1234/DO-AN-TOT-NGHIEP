@@ -6,6 +6,7 @@
     <title>House Price Prediction & Analytics</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ui-enhancements.css') }}">
     <script src="{{ url_for('static', filename='js/translations.js') }}"></script>
     <style>
         :root {
@@ -196,7 +197,38 @@
 
         .tab-content {
             display: none;
-            animation: fadeIn 0.4s ease;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
         }
 
         .tab-content.active {
@@ -684,49 +716,85 @@
                 <h2><i class="fas fa-magic"></i> <span data-i18n="singleTitle">Single Property Prediction</span></h2>
                 <div id="modelInfo" class="model-info"></div>
                 
+                <!-- Quick Tips Section -->
+                <div style="background: linear-gradient(135deg, #E3F2FD 0%, #F1F8E9 100%); border-left: 4px solid var(--accent-blue); padding: 1.2rem; margin-bottom: 1.5rem; border-radius: 8px;">
+                    <h4 style="color: var(--text-dark); margin-bottom: 0.8rem; font-size: 1rem;">
+                        <i class="fas fa-lightbulb" style="color: #FFA726;"></i> Quick Tips
+                    </h4>
+                    <ul style="margin: 0; padding-left: 1.5rem; color: var(--text-medium); font-size: 0.9rem; line-height: 1.8;">
+                        <li><strong>Property Type:</strong> Larger types (4-5 ROOM, EXECUTIVE) typically have higher values</li>
+                        <li><strong>Area:</strong> Select property type to auto-fill typical area size</li>
+                        <li><strong>Future Years:</strong> Predictions for 2026-2030 are extrapolations based on historical trends</li>
+                    </ul>
+                </div>
+                
                 <form id="singleForm">
                     <div class="form-grid">
-                        <div class="form-group">
-                            <label><i class="fas fa-globe"></i> Country</label>
+                        <div class="form-group" style="--index: 0">
+                            <label class="tooltip" data-tooltip="Select the country where the property is located">
+                                <i class="fas fa-globe"></i> Country
+                            </label>
                             <select name="country" id="countrySelect" required onchange="loadCities()">
                                 <option value="">Select Country...</option>
                                 <option value="Singapore">🇸🇬 Singapore</option>
                                 <option value="Australia">🇦🇺 Australia</option>
                                 <option value="USA">🇺🇸 USA</option>
+                                <option value="UK">🇬🇧 UK</option>
+                                <option value="Canada">🇨🇦 Canada</option>
+                                <option value="Germany">🇩🇪 Germany</option>
+                                <option value="France">🇫🇷 France</option>
+                                <option value="Japan">🇯🇵 Japan</option>
+                                <option value="China">🇨🇳 China</option>
+                                <option value="South Korea">🇰🇷 South Korea</option>
+                                <option value="India">🇮🇳 India</option>
+                                <option value="UAE">🇦🇪 UAE</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-city"></i> City</label>
+                        <div class="form-group" style="--index: 1">
+                            <label class="tooltip" data-tooltip="Choose the specific city for accurate pricing">
+                                <i class="fas fa-city"></i> City
+                            </label>
                             <select name="city" id="citySelect" required>
                                 <option value="">Select Country First...</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-calendar-alt"></i> Year</label>
-                            <input type="number" name="year" id="yearInput" required placeholder="2024" min="1990" max="2030">
+                        <div class="form-group" style="--index: 2">
+                            <label class="tooltip" data-tooltip="Year of construction or purchase (1990-2030)">
+                                <i class="fas fa-calendar-alt"></i> Year
+                            </label>
+                            <input type="number" name="year" id="yearInput" required placeholder="2025" min="1990" max="2030">
                             <small id="yearWarning" style="color: #ff9800; display: none; margin-top: 5px;">
                                 ⚠️ Future year predictions are extrapolations and may be less accurate.
                             </small>
                         </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-calendar-day"></i> Month</label>
+                        <div class="form-group" style="--index: 3">
+                            <label class="tooltip" data-tooltip="Month of the year (1-12)">
+                                <i class="fas fa-calendar-day"></i> Month
+                            </label>
                             <input type="number" name="month" required min="1" max="12" placeholder="1-12">
                         </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-ruler-combined"></i> Area (m²)</label>
-                            <input type="number" name="area_m2" step="0.01" required placeholder="100">
+                        <div class="form-group" style="--index: 4">
+                            <label class="tooltip" data-tooltip="Total floor area in square meters">
+                                <i class="fas fa-ruler-combined"></i> Area (m²)
+                            </label>
+                            <input type="number" name="area_m2" id="areaInput" step="0.01" required placeholder="100">
+                            <small style="color: var(--text-light); font-size: 0.85rem; display: block; margin-top: 0.3rem;">
+                                💡 Will auto-fill when you select property type
+                            </small>
                         </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-building"></i> Property Type</label>
-                            <select name="property_type" required>
+                        <div class="form-group" style="--index: 5">
+                            <label class="tooltip" data-tooltip="Type of property - affects area and pricing">
+                                <i class="fas fa-building"></i> Property Type
+                            </label>
+                            <select name="property_type" id="propertyTypeSelect" required onchange="autoFillArea()">
                                 <option value="">Select Type...</option>
-                                <option value="1 ROOM">1 ROOM</option>
-                                <option value="2 ROOM">2 ROOM</option>
-                                <option value="3 ROOM">3 ROOM</option>
-                                <option value="4 ROOM">4 ROOM</option>
-                                <option value="5 ROOM">5 ROOM</option>
-                                <option value="EXECUTIVE">EXECUTIVE</option>
-                                <option value="MULTI-GENERATION">MULTI-GENERATION</option>
+                                <option value="1 ROOM">1 ROOM (≈35m²)</option>
+                                <option value="2 ROOM">2 ROOM (≈50m²)</option>
+                                <option value="3 ROOM">3 ROOM (≈65m²)</option>
+                                <option value="4 ROOM">4 ROOM (≈90m²)</option>
+                                <option value="5 ROOM">5 ROOM (≈110m²)</option>
+                                <option value="EXECUTIVE">EXECUTIVE (≈135m²)</option>
+                                <option value="MULTI-GENERATION">MULTI-GENERATION (≈150m²)</option>
                             </select>
                         </div>
                     </div>
@@ -781,7 +849,7 @@
         <!-- Analytics Tab -->
         <div id="analytics-tab" class="tab-content">
             <div class="card">
-                <h2><i class="fas fa-chart-pie"></i> Data Analytics & Insights <span class="badge">Live Data</span></h2>
+                <h2 style="margin-bottom: 1.5rem;"><i class="fas fa-chart-pie"></i> Data Analytics & Insights</h2>
                 
                 <!-- Loading Indicator -->
                 <div id="analyticsLoading" style="display: none; text-align: center; padding: 3rem;">
@@ -813,12 +881,12 @@
                         <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center;">
                             <div style="flex: 1; min-width: 150px;">
                                 <label style="font-size: 0.85rem; color: var(--text-medium); margin-bottom: 0.3rem; display: block;">From Year</label>
-                                <input type="number" id="analyticsYearFrom" min="1990" max="2025" value="2015" 
+                                <input type="number" id="analyticsYearFrom" min="1990" max="2024" value="2015" 
                                        style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-light); border-radius: 8px; font-size: 0.95rem;">
                             </div>
                             <div style="flex: 1; min-width: 150px;">
                                 <label style="font-size: 0.85rem; color: var(--text-medium); margin-bottom: 0.3rem; display: block;">To Year</label>
-                                <input type="number" id="analyticsYearTo" min="1990" max="2025" value="2025" 
+                                <input type="number" id="analyticsYearTo" min="1990" max="2024" value="2024" 
                                        style="width: 100%; padding: 0.6rem; border: 1px solid var(--border-light); border-radius: 8px; font-size: 0.95rem;">
                             </div>
                         </div>
@@ -862,6 +930,19 @@
                         <button onclick="exportAnalyticsData()" class="btn" style="width: auto; padding: 0.8rem 2rem; background: var(--accent-teal);">
                             <i class="fas fa-download"></i> Export Data (CSV)
                         </button>
+                    </div>
+                </div>
+                
+                <!-- Data Availability Info -->
+                <div style="background: linear-gradient(135deg, #FFF3E0 0%, #FFE0B2 100%); border-left: 4px solid #FF9800; padding: 1rem; margin: 1.5rem 0; border-radius: 8px;">
+                    <div style="display: flex; align-items: center; gap: 0.8rem;">
+                        <i class="fas fa-info-circle" style="color: #F57C00; font-size: 1.5rem;"></i>
+                        <div>
+                            <strong style="color: var(--text-dark);">Data Availability:</strong>
+                            <span style="color: var(--text-medium); margin-left: 0.5rem;">
+                                Currently showing <strong>Singapore</strong> data only. Other countries are available for prediction but not in analytics dataset.
+                            </span>
+                        </div>
                     </div>
                 </div>
                 
@@ -1137,6 +1218,31 @@
             }
         }
 
+        // Auto-fill area based on property type
+        function autoFillArea() {
+            const propertyType = document.getElementById('propertyTypeSelect').value;
+            const areaInput = document.getElementById('areaInput');
+            
+            const areaMap = {
+                '1 ROOM': 35,
+                '2 ROOM': 50,
+                '3 ROOM': 65,
+                '4 ROOM': 90,
+                '5 ROOM': 110,
+                'EXECUTIVE': 135,
+                'MULTI-GENERATION': 150
+            };
+            
+            if (propertyType && areaMap[propertyType]) {
+                areaInput.value = areaMap[propertyType];
+                // Add visual feedback
+                areaInput.style.background = '#E8F5E9';
+                setTimeout(() => {
+                    areaInput.style.background = '';
+                }, 1000);
+            }
+        }
+        
         // Load cities based on selected country
         async function loadCities() {
             const countrySelect = document.getElementById('countrySelect');
@@ -1246,6 +1352,11 @@
                         </div>
                         ${warningMsg}
                     `;
+                    
+                    // Auto-scroll to results
+                    setTimeout(() => {
+                        resultDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
                 } else {
                     resultDiv.innerHTML = `<div class="error"><i class="fas fa-times-circle"></i> ${t('errorOccurred')}: ${result.error}</div>`;
                 }
@@ -1523,34 +1634,46 @@ United States,Seattle,2024,12,150,5 ROOM`;
             const filterDiv = document.getElementById('countryFilter');
             filterDiv.innerHTML = '';
             
+            // Only Singapore has data in analytics
+            const availableDataCountries = ['Singapore'];
+            
             availableCountries.forEach(country => {
+                const hasData = availableDataCountries.includes(country);
                 const checkboxDiv = document.createElement('div');
-                checkboxDiv.className = 'country-checkbox checked';
+                checkboxDiv.className = hasData ? 'country-checkbox checked' : 'country-checkbox';
                 
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.id = `country_${country}`;
                 checkbox.value = country;
-                checkbox.checked = true;
+                checkbox.checked = hasData;
+                checkbox.disabled = !hasData;
                 
                 const label = document.createElement('label');
                 label.htmlFor = `country_${country}`;
                 label.textContent = country;
-                label.style.cursor = 'pointer';
+                label.style.cursor = hasData ? 'pointer' : 'not-allowed';
+                label.style.opacity = hasData ? '1' : '0.5';
                 
-                // Improved click handler with event delegation
-                checkbox.addEventListener('change', function() {
-                    checkboxDiv.classList.toggle('checked', this.checked);
-                });
+                if (!hasData) {
+                    label.title = 'No analytics data available for this country';
+                    checkboxDiv.style.opacity = '0.5';
+                    checkboxDiv.style.cursor = 'not-allowed';
+                }
                 
-                // Allow clicking on the div to toggle checkbox
-                checkboxDiv.addEventListener('click', function(e) {
-                    // Prevent double-toggle if clicking directly on checkbox
-                    if (e.target !== checkbox) {
-                        checkbox.checked = !checkbox.checked;
-                        checkbox.dispatchEvent(new Event('change'));
-                    }
-                });
+                // Click handler for countries with data
+                if (hasData) {
+                    checkbox.addEventListener('change', function() {
+                        checkboxDiv.classList.toggle('checked', this.checked);
+                    });
+                    
+                    checkboxDiv.addEventListener('click', function(e) {
+                        if (e.target !== checkbox) {
+                            checkbox.checked = !checkbox.checked;
+                            checkbox.dispatchEvent(new Event('change'));
+                        }
+                    });
+                }
                 
                 checkboxDiv.appendChild(checkbox);
                 checkboxDiv.appendChild(label);
@@ -1781,11 +1904,29 @@ United States,Seattle,2024,12,150,5 ROOM`;
                 if (!result.success) {
                     document.getElementById('analyticsLoading').style.display = 'none';
                     document.getElementById('analyticsContent').style.display = 'block';
-                    showAnalyticsError('Error loading analytics: ' + result.error);
+                    showAnalyticsError('Error loading analytics: ' + result.error, result);
                     return;
                 }
                 
                 const data = result.data;
+                
+                // Show info message if available (for live API with no Singapore selected)
+                if (result.info_message) {
+                    const infoDiv = document.querySelector('[style*="FFF3E0"]');
+                    if (infoDiv) {
+                        infoDiv.innerHTML = `
+                            <div style="display: flex; align-items: center; gap: 0.8rem;">
+                                <i class="fas fa-info-circle" style="color: #FF9800; font-size: 1.5rem;"></i>
+                                <div>
+                                    <strong style="color: var(--text-dark);">Note:</strong>
+                                    <span style="color: var(--text-medium); margin-left: 0.5rem;">
+                                        ${result.info_message}
+                                    </span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
                 
                 // Store data for export
                 currentAnalyticsData = data;
@@ -1803,10 +1944,24 @@ United States,Seattle,2024,12,150,5 ROOM`;
                 createPriceDistChart(data.price_distribution);
                 createAreaPriceChart(data.area_price_scatter);
                 
-                // Create new charts
-                createMonthlyTrendChart(data.monthly_trends);
-                createCityHeatmapChart(data.city_heatmap);
-                createCumulativeGrowthChart(data.cumulative_growth);
+                // Create new charts with error handling
+                try {
+                    if (data.monthly_trends) createMonthlyTrendChart(data.monthly_trends);
+                } catch (e) {
+                    console.warn('Could not create monthly trend chart:', e);
+                }
+                
+                try {
+                    if (data.city_heatmap) createCityHeatmapChart(data.city_heatmap);
+                } catch (e) {
+                    console.warn('Could not create city heatmap chart:', e);
+                }
+                
+                try {
+                    if (data.cumulative_growth) createCumulativeGrowthChart(data.cumulative_growth);
+                } catch (e) {
+                    console.warn('Could not create cumulative growth chart:', e);
+                }
                 
                 chartsInitialized = true;
                 
@@ -1821,13 +1976,30 @@ United States,Seattle,2024,12,150,5 ROOM`;
             }
         }
         
-        function showAnalyticsError(message) {
+        function showAnalyticsError(message, responseData = null) {
             const statsGrid = document.getElementById('statsGrid');
+            
+            // If response includes country information, show it
+            let countryInfo = '';
+            if (responseData) {
+                if (responseData.selected_countries) {
+                    countryInfo = `<p style="color: var(--text-medium); margin-top: 0.5rem;">
+                        <strong>Selected countries:</strong> ${responseData.selected_countries.join(', ')}
+                    </p>`;
+                }
+                if (responseData.available_countries) {
+                    countryInfo += `<p style="color: #00C9A7; margin-top: 0.3rem;">
+                        <strong>Data available for:</strong> ${responseData.available_countries.join(', ')}
+                    </p>`;
+                }
+            }
+            
             statsGrid.innerHTML = `
                 <div style="grid-column: 1 / -1; padding: 2rem; text-align: center; background: var(--danger-bg); border: 2px solid var(--danger); border-radius: 12px;">
                     <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: var(--danger); margin-bottom: 1rem;"></i>
                     <h3 style="color: var(--danger); margin-bottom: 0.5rem;">Error Loading Analytics</h3>
                     <p style="color: var(--text-medium);">${message}</p>
+                    ${countryInfo}
                     <button onclick="loadAnalytics()" class="btn" style="margin-top: 1rem; width: auto; padding: 0.8rem 2rem;">
                         <i class="fas fa-sync-alt"></i> Retry
                     </button>
@@ -2052,6 +2224,28 @@ United States,Seattle,2024,12,150,5 ROOM`;
         function createPriceCountryChart(data) {
             const colors = getChartColors();
             const ctx = document.getElementById('priceCountryChart').getContext('2d');
+            
+            // Generate dynamic colors for all countries
+            const colorPalette = [
+                'rgba(0, 102, 255, 0.8)',   // Blue
+                'rgba(0, 184, 217, 0.8)',   // Cyan
+                'rgba(255, 107, 107, 0.8)', // Red
+                'rgba(106, 176, 76, 0.8)',  // Green
+                'rgba(255, 159, 64, 0.8)',  // Orange
+                'rgba(153, 102, 255, 0.8)', // Purple
+                'rgba(255, 206, 86, 0.8)',  // Yellow
+                'rgba(75, 192, 192, 0.8)',  // Teal
+                'rgba(255, 99, 132, 0.8)',  // Pink
+                'rgba(54, 162, 235, 0.8)',  // Sky Blue
+                'rgba(201, 203, 207, 0.8)', // Grey
+                'rgba(255, 205, 210, 0.8)'  // Light Pink
+            ];
+            
+            // Create background colors array matching data length
+            const backgroundColors = data.labels.map((_, index) => 
+                colorPalette[index % colorPalette.length]
+            );
+            
             chartInstances.priceCountry = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -2059,7 +2253,7 @@ United States,Seattle,2024,12,150,5 ROOM`;
                     datasets: [{
                         label: 'Average Price',
                         data: data.mean,
-                        backgroundColor: [colors.primary, colors.secondary, colors.tertiary],
+                        backgroundColor: backgroundColors,
                         borderRadius: 8,
                         borderWidth: 0
                     }]
@@ -2067,11 +2261,26 @@ United States,Seattle,2024,12,150,5 ROOM`;
                 options: {
                     responsive: true,
                     plugins: { 
-                        legend: { display: false }
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label || '';
+                                    const value = context.parsed.y;
+                                    const count = data.count[context.dataIndex];
+                                    return `${label}: $${value.toLocaleString()} (${count} properties)`;
+                                }
+                            }
+                        }
                     },
                     scales: {
                         x: { 
-                            ticks: { color: colors.text },
+                            ticks: { 
+                                color: colors.text,
+                                font: { size: 11 },
+                                maxRotation: 45,
+                                minRotation: 45
+                            },
                             grid: { display: false }
                         },
                         y: {

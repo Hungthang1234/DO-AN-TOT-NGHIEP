@@ -140,7 +140,7 @@ def load_model():
             print("  Run train_pipeline.py first to create the model")
     except Exception as e:
         print(f"❌ Error loading model: {e}")
-        traceback.print_exc()
+        # traceback.print_exc()  # Comment out to prevent process crash
 
 load_model()
 
@@ -300,6 +300,92 @@ def external_api_page():
     return render_template('external_api_mode.html')
 
 
+@app.route('/api/country_info/<country_code>', methods=['GET'])
+def get_country_info(country_code):
+    """
+    Get country information from REST Countries API
+    Example: /api/country_info/singapore or /api/country_info/usa
+    """
+    try:
+        import requests
+        
+        # Map common names to alpha codes
+        country_map = {
+            'singapore': 'SGP',
+            'usa': 'USA',
+            'united states': 'USA',
+            'australia': 'AUS',
+            'uk': 'GBR',
+            'united kingdom': 'GBR',
+            'canada': 'CAN',
+            'germany': 'DEU',
+            'france': 'FRA',
+            'japan': 'JPN',
+            'china': 'CHN',
+            'south korea': 'KOR',
+            'india': 'IND',
+            'uae': 'ARE'
+        }
+        
+        # Get alpha code
+        code = country_map.get(country_code.lower(), country_code.upper())
+        
+        # Fetch from REST Countries API
+        api_url = f'https://restcountries.com/v3.1/alpha/{code}'
+        response = requests.get(api_url, timeout=5)
+        
+        if response.status_code != 200:
+            return jsonify({
+                'success': False,
+                'error': f'Country not found: {country_code}'
+            }), 404
+        
+        country_data = response.json()[0]
+        
+        # Extract relevant information
+        info = {
+            'success': True,
+            'data': {
+                'name': country_data.get('name', {}).get('common', 'Unknown'),
+                'official_name': country_data.get('name', {}).get('official', 'Unknown'),
+                'capital': country_data.get('capital', ['N/A'])[0] if country_data.get('capital') else 'N/A',
+                'region': country_data.get('region', 'Unknown'),
+                'subregion': country_data.get('subregion', 'Unknown'),
+                'population': country_data.get('population', 0),
+                'area': country_data.get('area', 0),
+                'languages': list(country_data.get('languages', {}).values()) if country_data.get('languages') else [],
+                'currencies': [
+                    {
+                        'code': code,
+                        'name': curr.get('name', ''),
+                        'symbol': curr.get('symbol', '')
+                    }
+                    for code, curr in country_data.get('currencies', {}).items()
+                ],
+                'flag': country_data.get('flags', {}).get('svg', ''),
+                'coat_of_arms': country_data.get('coatOfArms', {}).get('svg', ''),
+                'timezones': country_data.get('timezones', []),
+                'continents': country_data.get('continents', []),
+                'borders': country_data.get('borders', []),
+                'maps': country_data.get('maps', {}),
+                'latlng': country_data.get('latlng', [])
+            }
+        }
+        
+        return jsonify(info)
+        
+    except ImportError:
+        return jsonify({
+            'success': False,
+            'error': 'requests module not installed. Please run: pip install requests'
+        }), 500
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': f'Error fetching country info: {str(e)}'
+        }), 500
+
+
 @app.route('/predict', methods=['POST'])
 def predict():
     """Handle prediction request"""
@@ -341,7 +427,8 @@ def predict():
             # Create date string in YYYY-MM-DD format
             year = int(df['year'].iloc[0]) if not pd.isna(df['year'].iloc[0]) else 2024
             month = int(df['month'].iloc[0]) if not pd.isna(df['month'].iloc[0]) else 1
-            df['date'] = f"{year}-{month:02d}-01"
+            df['date'] = pd.to_datetime(f"{year}-{month:02d}-01")
+            print(f"🗓️ Created date: {df['date'].iloc[0]}, Year: {year}, Month: {month}")
         
         # Debug: print received data
         print(f"DEBUG - Received data: {input_data}")
@@ -574,8 +661,8 @@ def analytics():
                 'error': 'Data file not found. Please ensure cleaned_real_estate.csv exists in Data folder.'
             }), 404
         
-        # Load sample of data (limit to 15000 rows for better analysis)
-        df = pd.read_csv(data_path, nrows=15000)
+        # Load all data for complete year coverage (full dataset ~978K rows)
+        df = pd.read_csv(data_path)
         
         # Apply filters
         if selected_countries and len(selected_countries) > 0:
@@ -637,22 +724,32 @@ def analytics():
             monthly_trends = pd.DataFrame({'year_month': [], 'price': []})
         
         # City heatmap (top 15 cities with price levels)
-        city_heatmap = df.groupby('city')['price'].agg(['mean', 'count']).reset_index()
-        city_heatmap = city_heatmap[city_heatmap['count'] >= 5].nlargest(15, 'mean')
+        try:
+            city_heatmap = df.groupby('city')['price'].agg(['mean', 'count']).reset_index()
+            city_heatmap = city_heatmap[city_heatmap['count'] >= 5].nlargest(15, 'mean')
+        except Exception as e:
+            print(f"Warning: Error processing city heatmap: {e}")
+            city_heatmap = pd.DataFrame({'city': [], 'mean': [], 'count': []})
         
         # Cumulative growth (year-over-year)
         try:
-            if len(price_by_year) > 1:
+            if len(price_by_year) >= 1:
                 growth_data = price_by_year.copy()
-                growth_data['growth'] = growth_data['mean'].pct_change() * 100
-                growth_data['cumulative'] = (1 + growth_data['mean'].pct_change()).cumprod() * 100
-                # Replace NaN with 0 for first row
-                growth_data['growth'] = growth_data['growth'].fillna(0)
-                growth_data['cumulative'] = growth_data['cumulative'].fillna(100)
+                if len(growth_data) > 1:
+                    growth_data['growth'] = growth_data['mean'].pct_change() * 100
+                    growth_data['cumulative'] = (1 + growth_data['mean'].pct_change()).cumprod() * 100
+                    # Replace NaN with 0 for first row
+                    growth_data['growth'] = growth_data['growth'].fillna(0)
+                    growth_data['cumulative'] = growth_data['cumulative'].fillna(100)
+                else:
+                    # For single year, show flat growth
+                    growth_data['growth'] = 0.0
+                    growth_data['cumulative'] = 100.0
             else:
                 growth_data = pd.DataFrame({'year': [], 'mean': [], 'growth': [], 'cumulative': []})
         except Exception as e:
             print(f"Warning: Error processing cumulative growth: {e}")
+            traceback.print_exc()
             growth_data = pd.DataFrame({'year': [], 'mean': [], 'growth': [], 'cumulative': []})
         
         # Additional statistics
@@ -751,8 +848,7 @@ def analytics():
             'success': False,
             'error': f'Error loading analytics: {str(e)}',
             'traceback': traceback.format_exc()
-        }), 500
-
+        })
 
 @app.route('/logs', methods=['GET'])
 def view_logs():

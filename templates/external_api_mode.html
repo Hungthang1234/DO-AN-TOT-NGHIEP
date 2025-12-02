@@ -3,8 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>External API Predictor - No Dataset Mode</title>
+    <title>External API Predictor | House Price Prediction</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --primary-blue: #0066FF;
+            --primary-blue-dark: #0052CC;
+            --primary-blue-light: #4D94FF;
+            --accent-blue: #00B8D9;
+            --accent-teal: #00C9A7;
+            --bg-light: #F8FAFB;
+            --bg-white: #FFFFFF;
+            --text-dark: #172B4D;
+            --text-medium: #5E6C84;
+            --text-light: #8993A4;
+            --border-light: #DFE1E6;
+            --success: #10b981;
+            --success-bg: #d1fae5;
+            --warning: #f59e0b;
+            --warning-bg: #fef3c7;
+            --danger: #FF4757;
+            --danger-bg: #FFE5E8;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -12,97 +36,131 @@
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+            background: var(--bg-light);
             min-height: 100vh;
-            padding: 20px;
+            padding: 1.5rem;
+            color: var(--text-dark);
         }
         
         .container {
-            max-width: 800px;
+            max-width: 1200px;
             margin: 0 auto;
         }
         
         .header {
-            background: white;
-            border-radius: 15px;
-            padding: 30px;
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            text-align: center;
+            background: linear-gradient(135deg, var(--primary-blue) 0%, var(--accent-blue) 100%);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="white" stroke-width="0.5" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
         }
         
         .header h1 {
-            color: #667eea;
-            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+            font-size: 2rem;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        
+        .header p {
+            position: relative;
+            z-index: 1;
+            opacity: 0.95;
         }
         
         .header .badge {
+            position: relative;
+            z-index: 1;
             display: inline-block;
-            background: #10b981;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
             color: white;
-            padding: 5px 15px;
+            padding: 0.4rem 1rem;
             border-radius: 20px;
-            font-size: 14px;
-            margin: 5px;
+            font-size: 0.85rem;
+            margin: 0.25rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         
         .info-box {
-            background: rgba(255,255,255,0.95);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            background: var(--bg-white);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-light);
         }
         
         .info-box h3 {
-            color: #667eea;
-            margin-bottom: 15px;
+            color: var(--text-dark);
+            margin-bottom: 1rem;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 600;
         }
         
         .api-card {
-            background: white;
-            border: 2px solid #e5e7eb;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 15px;
+            background: var(--bg-white);
+            border: 2px solid var(--border-light);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.25rem;
             transition: all 0.3s ease;
         }
         
         .api-card:hover {
-            border-color: #667eea;
+            border-color: var(--primary-blue);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102,126,234,0.2);
+            box-shadow: var(--shadow-lg);
         }
         
         .api-card.free {
-            border-color: #10b981;
+            border-color: var(--success);
+            background: linear-gradient(135deg, var(--bg-white) 0%, var(--success-bg) 100%);
         }
         
         .api-card.paid {
-            border-color: #f59e0b;
+            border-color: var(--warning);
+            background: linear-gradient(135deg, var(--bg-white) 0%, var(--warning-bg) 100%);
         }
         
         .api-status {
             display: inline-block;
-            padding: 3px 10px;
+            padding: 0.35rem 0.85rem;
             border-radius: 12px;
-            font-size: 12px;
-            font-weight: bold;
-            margin-left: 10px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-left: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         
         .api-status.free {
-            background: #d1fae5;
-            color: #065f46;
+            background: var(--success);
+            color: white;
         }
         
         .api-status.paid {
-            background: #fef3c7;
-            color: #92400e;
+            background: var(--warning);
+            color: white;
         }
         
         .form-group {
@@ -234,10 +292,27 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🌐 External API Predictor</h1>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h1 style="margin: 0;">🌐 External API Predictor</h1>
+                <a href="/" style="padding: 10px 20px; background: #667eea; color: white; text-decoration: none; border-radius: 8px; font-size: 14px; transition: all 0.3s ease;">
+                    ← Back to Home
+                </a>
+            </div>
             <p style="color: #6b7280; margin: 10px 0;">Dự đoán giá nhà từ APIs bên ngoài - KHÔNG dùng dataset local</p>
             <span class="badge">✓ Dataset an toàn</span>
             <span class="badge">✓ Real-time data</span>
+            <span class="badge">✓ Country info từ REST Countries API</span>
+        </div>
+        
+        <!-- Quick Tips -->
+        <div class="info-box" style="background: linear-gradient(135deg, #e0f2fe 0%, #e0e7ff 100%); border-left: 4px solid #667eea;">
+            <h3 style="color: #667eea; margin-bottom: 10px;">💡 Quick Tips</h3>
+            <ul style="color: #4b5563; line-height: 1.8; margin-left: 20px;">
+                <li><strong>Flat Type tự động điền Floor Area:</strong> Chọn loại căn hộ → Diện tích sẽ tự động điền</li>
+                <li><strong>Giá cao nhất:</strong> Bukit Timah, Central Area (location premium)</li>
+                <li><strong>Lease Year:</strong> Căn mới (2010+) có giá cao hơn 15-30% so với căn cũ</li>
+                <li><strong>Tầng cao (10+):</strong> Thường có giá cao hơn 5-10% so với tầng thấp</li>
+            </ul>
         </div>
         
         <div class="info-box">
@@ -286,26 +361,30 @@
                     </div>
                     
                     <div class="form-group">
-                        <label>Flat Type:</label>
+                        <label>Flat Type: <span style="color: #6b7280; font-size: 12px;">(Most popular: 4 ROOM)</span></label>
                         <select name="flat_type" required>
                             <option value="">Chọn loại...</option>
-                            <option value="3 ROOM">3 ROOM</option>
-                            <option value="4 ROOM">4 ROOM</option>
-                            <option value="5 ROOM">5 ROOM</option>
-                            <option value="EXECUTIVE">EXECUTIVE</option>
+                            <option value="3 ROOM">3 ROOM (60-70 sqm)</option>
+                            <option value="4 ROOM" selected>4 ROOM (85-95 sqm) ⭐ Popular</option>
+                            <option value="5 ROOM">5 ROOM (105-115 sqm)</option>
+                            <option value="EXECUTIVE">EXECUTIVE (130+ sqm)</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
-                        <label>Floor Area (sqm): <span style="color: #6b7280; font-size: 12px;">(30-300)</span></label>
+                        <label>Floor Area (sqm): <span style="color: #6b7280; font-size: 12px;">(Auto-filled based on flat type)</span></label>
                         <input type="number" name="floor_area_sqm" min="30" max="300" step="0.1" value="90" required>
-                        <small style="color: #6b7280; font-size: 11px;">Typical: 3 ROOM (60-70), 4 ROOM (85-95), 5 ROOM (105-115)</small>
+                        <small style="color: #6b7280; font-size: 11px;">
+                            📊 Average: 3R=65, 4R=90, 5R=110, Exec=135
+                        </small>
                     </div>
                     
                     <div class="form-group">
-                        <label>Lease Commence Year: <span style="color: #6b7280; font-size: 12px;">(1960-2024)</span></label>
-                        <input type="number" name="lease_commence_date" min="1960" max="2024" value="2000" required>
-                        <small style="color: #6b7280; font-size: 11px;">Older properties have lower remaining lease years</small>
+                        <label>Lease Commence Year: <span style="color: #6b7280; font-size: 12px;">(Dự đoán cho tương lai)</span></label>
+                        <input type="number" name="lease_commence_date" min="1960" max="2030" value="2025" required>
+                        <small style="color: #6b7280; font-size: 11px;">
+                            📅 New builds (2020-2030): Premium pricing | Recent (2010-2019): Modern | Old (1960-1990): Budget
+                        </small>
                     </div>
                     
                     <div class="form-group">
@@ -340,11 +419,31 @@
         <div class="loading" id="loading">
             <div class="loading-spinner"></div>
             <p style="margin-top: 10px; color: white;">Đang fetch data từ API...</p>
+```</invoke>
+        
+        <div class="loading" id="loading">
+            <div class="loading-spinner"></div>
+            <p style="margin-top: 10px; color: white;">Đang fetch data từ API...</p>
         </div>
         
         <div class="result-box" id="resultBox">
             <h3 id="resultTitle">Prediction Result</h3>
             <div class="price-display" id="priceDisplay">-</div>
+            
+            <!-- Country Context (appears after successful prediction) -->
+            <div id="countryContext" style="display: none; background: #f9fafb; padding: 15px; border-radius: 10px; margin: 15px 0; border-left: 4px solid #667eea;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <img id="countryFlag" src="" alt="flag" style="width: 60px; height: auto; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 5px 0; color: #667eea;" id="countryName">-</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; font-size: 13px; color: #6b7280;">
+                            <div><strong>Capital:</strong> <span id="countryCapital">-</span></div>
+                            <div><strong>Population:</strong> <span id="countryPop">-</span></div>
+                            <div><strong>Currency:</strong> <span id="countryCurrency">-</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             
             <div class="detail-grid" id="detailGrid">
                 <!-- Details will be inserted here -->
@@ -354,6 +453,136 @@
     
     <script>
         const API_BASE = 'http://localhost:5000';
+        
+        // Load country context (compact version for prediction result)
+        async function loadCountryContext(countryCode) {
+            try {
+                const response = await fetch(`${API_BASE}/api/country_info/${countryCode}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const data = result.data;
+                    const population = new Intl.NumberFormat('vi-VN').format(data.population);
+                    const currencies = data.currencies.map(c => `${c.symbol || c.code}`).join(', ');
+                    
+                    // Update country context section
+                    document.getElementById('countryFlag').src = data.flag;
+                    document.getElementById('countryName').textContent = data.name;
+                    document.getElementById('countryCapital').textContent = data.capital;
+                    document.getElementById('countryPop').textContent = population;
+                    document.getElementById('countryCurrency').textContent = currencies;
+                    
+                    // Show the context
+                    document.getElementById('countryContext').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error loading country context:', error);
+                // Don't show error to user, just skip country info
+            }
+        }
+        
+        // Load country information from REST Countries API (full version - unused now)
+        async function loadCountryInfo(countryCode) {
+            try {
+                const response = await fetch(`${API_BASE}/api/country_info/${countryCode}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const data = result.data;
+                    const infoBox = document.getElementById('countryInfoBox');
+                    const content = document.getElementById('countryInfoContent');
+                    
+                    // Format population
+                    const population = new Intl.NumberFormat('vi-VN').format(data.population);
+                    const area = new Intl.NumberFormat('vi-VN').format(data.area);
+                    
+                    // Format currencies
+                    const currencies = data.currencies.map(c => 
+                        `${c.name} (${c.symbol || c.code})`
+                    ).join(', ');
+                    
+                    content.innerHTML = `
+                        <div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 20px; padding: 15px; background: #f9fafb; border-radius: 10px;">
+                            <img src="${data.flag}" alt="${data.name} flag" 
+                                style="width: 100px; height: auto; border: 2px solid #e5e7eb; border-radius: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                            <div style="flex: 1;">
+                                <h2 style="color: #667eea; margin: 0 0 5px 0;">${data.name}</h2>
+                                <p style="color: #6b7280; margin: 0; font-size: 14px;">${data.official_name}</p>
+                            </div>
+                        </div>
+                        
+                        <div style="grid-column: 1 / -1; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                            <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                                <div style="color: #6b7280; font-size: 12px; margin-bottom: 5px;">🏛️ Capital</div>
+                                <div style="color: #1f2937; font-weight: 600;">${data.capital}</div>
+                            </div>
+                            
+                            <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                                <div style="color: #6b7280; font-size: 12px; margin-bottom: 5px;">🌍 Region</div>
+                                <div style="color: #1f2937; font-weight: 600;">${data.region}</div>
+                            </div>
+                            
+                            <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                                <div style="color: #6b7280; font-size: 12px; margin-bottom: 5px;">👥 Population</div>
+                                <div style="color: #1f2937; font-weight: 600;">${population}</div>
+                            </div>
+                            
+                            <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                                <div style="color: #6b7280; font-size: 12px; margin-bottom: 5px;">📏 Area</div>
+                                <div style="color: #1f2937; font-weight: 600;">${area} km²</div>
+                            </div>
+                            
+                            <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                                <div style="color: #6b7280; font-size: 12px; margin-bottom: 5px;">💰 Currency</div>
+                                <div style="color: #1f2937; font-weight: 600; font-size: 13px;">${currencies}</div>
+                            </div>
+                            
+                            <div style="background: white; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;">
+                                <div style="color: #6b7280; font-size: 12px; margin-bottom: 5px;">🗣️ Languages</div>
+                                <div style="color: #1f2937; font-weight: 600; font-size: 13px;">${data.languages.join(', ')}</div>
+                            </div>
+                        </div>
+                        
+                        ${data.maps.googleMaps ? `
+                        <div style="grid-column: 1 / -1; margin-top: 10px;">
+                            <a href="${data.maps.googleMaps}" target="_blank" 
+                                style="display: inline-block; padding: 10px 20px; background: #667eea; color: white; 
+                                text-decoration: none; border-radius: 8px; font-size: 14px;">
+                                🗺️ View on Google Maps
+                            </a>
+                        </div>
+                        ` : ''}
+                    `;
+                    
+                    infoBox.style.display = 'block';
+                    
+                    // Smooth scroll to country info
+                    infoBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    
+                } else {
+                    console.error('Failed to load country info:', result.error);
+                }
+            } catch (error) {
+                console.error('Error loading country info:', error);
+            }
+        }
+        
+        // Auto-fill floor area based on flat type
+        const flatTypeSelect = document.querySelector('select[name="flat_type"]');
+        const floorAreaInput = document.querySelector('input[name="floor_area_sqm"]');
+        
+        flatTypeSelect.addEventListener('change', function() {
+            const floorAreaMap = {
+                '3 ROOM': 65,
+                '4 ROOM': 90,
+                '5 ROOM': 110,
+                'EXECUTIVE': 135
+            };
+            
+            if (this.value && floorAreaMap[this.value]) {
+                floorAreaInput.value = floorAreaMap[this.value];
+            }
+        });
         
         document.getElementById('singaporeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -393,6 +622,14 @@
                 if (result.success) {
                     resultBox.className = 'result-box success';
                     document.getElementById('resultTitle').textContent = '✓ Prediction Successful';
+                    
+                    // Load country info in background and display it
+                    loadCountryContext('singapore');
+                    
+                    // Scroll to result smoothly
+                    setTimeout(() => {
+                        resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
                     
                     // Display price with confidence interval
                     let priceHtml = `SGD $${result.predicted_price.toLocaleString('en-US', {maximumFractionDigits: 0})}`;
@@ -463,6 +700,11 @@
                             <span style="color: #ef4444;">${result.error}</span>
                         </div>
                     `;
+                    
+                    // Scroll to error result
+                    setTimeout(() => {
+                        resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 100);
                 }
                 
             } catch (error) {
@@ -479,6 +721,11 @@
                         <span style="color: #ef4444;">${error.message}</span>
                     </div>
                 `;
+                
+                // Scroll to error result
+                setTimeout(() => {
+                    resultBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 100);
             }
         });
     </script>

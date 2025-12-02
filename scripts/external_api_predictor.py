@@ -106,8 +106,8 @@ class ExternalAPIPredictor:
             # Validate ranges
             if not (30 <= floor_area_sqm <= 300):
                 return {'success': False, 'error': 'Floor area must be between 30-300 sqm'}
-            if not (1960 <= lease_commence_date <= 2024):
-                return {'success': False, 'error': 'Lease year must be between 1960-2024'}
+            if not (1960 <= lease_commence_date <= 2030):
+                return {'success': False, 'error': 'Lease year must be between 1960-2030 (future prediction supported)'}
             if town.upper() not in ['ANG MO KIO', 'BEDOK', 'BISHAN', 'BUKIT BATOK', 'BUKIT MERAH',
                                      'BUKIT PANJANG', 'BUKIT TIMAH', 'CENTRAL AREA', 'CHOA CHU KANG',
                                      'CLEMENTI', 'GEYLANG', 'HOUGANG', 'JURONG EAST', 'JURONG WEST',
@@ -169,13 +169,15 @@ class ExternalAPIPredictor:
             avg_price_per_sqm = api_data_clean['price_per_sqm'].median()
             std_price_per_sqm = api_data_clean['price_per_sqm'].std()
             
-            # Calculate property age with validation
+            # Calculate property age with validation (allow future predictions)
             current_year = datetime.now().year
             property_age = current_year - lease_commence_date
             remaining_lease = max(0, 99 - property_age)  # Ensure non-negative
             
+            # For future year predictions, treat as brand new property (age 0)
             if property_age < 0:
-                return {'success': False, 'error': 'Invalid lease year (future year not allowed)'}
+                property_age = 0  # Future property, treat as new
+                remaining_lease = 99  # Full lease
             if property_age > 99:
                 return {'success': False, 'error': 'Property lease expired (>99 years old)'}
             
@@ -250,9 +252,62 @@ class ExternalAPIPredictor:
                     'data_quality': data_quality_warning
                 }
             else:
+                # Fallback: Statistical prediction when model not available
+                # Use median price per sqm from API data adjusted by property characteristics
+                base_price_per_sqm = avg_price_per_sqm
+                
+                # Adjust for property age (newer = higher price)
+                age_factor = 1.0
+                if property_age < 5:
+                    age_factor = 1.15  # 15% premium for very new
+                elif property_age < 10:
+                    age_factor = 1.08  # 8% premium for new
+                elif property_age > 30:
+                    age_factor = 0.90  # 10% discount for old
+                    
+                # Adjust for storey (higher = slight premium)
+                storey_factor = 1.0
+                storey_mid = self._parse_storey_range(storey_range)
+                if storey_mid >= 10:
+                    storey_factor = 1.05
+                elif storey_mid <= 3:
+                    storey_factor = 0.97
+                    
+                # Calculate predicted price
+                adjusted_price_per_sqm = base_price_per_sqm * age_factor * storey_factor
+                predicted_price = adjusted_price_per_sqm * floor_area_sqm
+                
+                # Confidence interval
+                confidence_interval = 1.96 * std_price_per_sqm * floor_area_sqm
+                
                 return {
-                    'success': False,
-                    'error': 'Model not loaded properly'
+                    'success': True,
+                    'predicted_price': float(predicted_price),
+                    'confidence_interval': {
+                        'lower': max(0, float(predicted_price - confidence_interval)),
+                        'upper': float(predicted_price + confidence_interval)
+                    },
+                    'api_samples': {
+                        'total': len(api_data),
+                        'after_cleaning': len(api_data_clean),
+                        'removed_outliers': len(api_data) - len(api_data_clean)
+                    },
+                    'market_data': {
+                        'avg_price_per_sqm': float(avg_price_per_sqm),
+                        'std_price_per_sqm': float(std_price_per_sqm),
+                        'min_price': float(api_data_clean['resale_price'].min()),
+                        'max_price': float(api_data_clean['resale_price'].max()),
+                        'median_price': float(api_data_clean['resale_price'].median())
+                    },
+                    'property_details': {
+                        'town': town,
+                        'flat_type': flat_type,
+                        'floor_area_sqm': floor_area_sqm,
+                        'property_age': property_age,
+                        'remaining_lease': remaining_lease
+                    },
+                    'data_source': 'Singapore HDB API - Statistical Prediction (ML model not loaded)',
+                    'data_quality': data_quality_warning or 'Using statistical method: base price × age factor × storey factor'
                 }
                 
         except Exception as e:
